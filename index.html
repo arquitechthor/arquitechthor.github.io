@@ -1,16 +1,15 @@
 <!--
+  CREDITS
 =========================================================
-* Soft UI Dashboard - v1.0.7
+* TEMPLATE
 =========================================================
-
+* Product Name: Soft UI Dashboard
+* Product Version: v1.0.7
 * Product Page: https://www.creative-tim.com/product/soft-ui-dashboard
 * Copyright 2023 Creative Tim (https://www.creative-tim.com)
 * Licensed under MIT (https://www.creative-tim.com/license)
 * Coded by Creative Tim
-
 =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -18,38 +17,35 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png">
-  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/images/logo-ios.png">
+  <link rel="shortcut icon" type="image/x-icon" href="data:image/png;base64,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">
   <title>
-    Soft UI Dashboard by Creative Tim
+    Hector Guzman | Software Arquitect | Java Developer
   </title>
   <!--     Fonts and icons     -->
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
   <!-- Nucleo Icons -->
-  <link href="assets/css/nucleo-icons.css" rel="stylesheet" />
-  <link href="assets/css/nucleo-svg.css" rel="stylesheet" />
+  <link href="https://arquitechthor.github.io/assets/css/nucleo-icons.css" rel="stylesheet" />
+  <link href="https://arquitechthor.github.io/assets/css/nucleo-svg.css" rel="stylesheet" />
   <!-- Font Awesome Icons -->
   <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
-  <link href="assets/css/nucleo-svg.css" rel="stylesheet" />
+  <link href="https://arquitechthor.github.io/assets/css/nucleo-svg.css" rel="stylesheet" />
   <!-- CSS Files -->
-  <link id="pagestyle" href="assets/css/soft-ui-dashboard.css?v=1.0.7" rel="stylesheet" />
-  <!-- Nepcha Analytics (nepcha.com) -->
-  <!-- Nepcha is a easy-to-use web analytics. No cookies and fully compliant with GDPR, CCPA and PECR. -->
-  <script defer data-site="YOUR_DOMAIN_HERE" src="https://api.nepcha.com/js/nepcha-analytics.js"></script>
+  <link id="pagestyle" href="https://arquitechthor.github.io/assets/css/soft-ui-dashboard.css?v=1.0.7" rel="stylesheet" />
 </head>
 
 <body class="g-sidenav-show bg-gray-100">
   
   <div class="main-content position-relative bg-gray-100 max-height-vh-100 h-100">
     <div class="container-fluid">
-      <div class="page-header min-height-300 border-radius-xl mt-4" style="background-image: url('assets/img/bgs/bg.png'); background-position-y: 50%;">
+      <div class="page-header min-height-300 border-radius-xl mt-4" style="background-image: url('https://arquitechthor.github.io/assets/img/bgs/bg.png'); background-position-y: 50%;">
         <span class="mask bg-gradient-primary opacity-6"></span>
       </div>
       <div class="card card-body blur shadow-blur mx-4 mt-n6 overflow-hidden">
         <div class="row gx-4">
           <div class="col-auto">
             <div class="avatar avatar-xl position-relative">
-              <img src="assets/img/arquitechthor-fondo-blanco.png" alt="profile_image" class="w-100 border-radius-lg shadow-sm">
+              <img src="https://arquitechthor.github.io/assets/img/arquitechthor-fondo-blanco.png" alt="profile_image" class="w-100 border-radius-lg shadow-sm">
             </div>
           </div>
           <div class="col-auto my-auto">
@@ -63,15 +59,50 @@
             </div>
           </div>
         </div>
+
+        <div class="container-fluid py-4">
+          <hr />
+          <div class="row">
+            <div class="col-lg-7 card p-3">
+              <h6>MAP</h6>
+              <p>
+                MAP is a project using
+                microservices architecture with the optimal
+                technology stack to be scalable and decoupled
+                so that it can easily adapt to new technological
+                changes (for example better technology).
+                It can also be deployed to the cloud for optimal performance and scalability.
+                <a class="btn bg-gradient-primary mt-3 w-100"
+                  href="https://arquitechthor.github.io/map/">View More</a>
+              
+              </p>
+            </div>
+            <div class="col-lg-1">
+              &nbsp;
+            </div>
+  
+            <div class="col-lg-4">
+              <div class="card p-3">
+                <h6>Links</h6>
+                <ul>
+                  <li>
+                    <a target="_blank" href="https://www.linkedin.com/in/guzman6001/">LinkedIn Profile</a>
+                  </li>
+                </ul>
+              </div>
+              
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!--   Core JS Files   -->
-  <script src="assets/js/core/popper.min.js"></script>
-  <script src="assets/js/core/bootstrap.min.js"></script>
-  <script src="assets/js/plugins/perfect-scrollbar.min.js"></script>
-  <script src="assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script src="https://arquitechthor.github.io/assets/js/core/popper.min.js"></script>
+  <script src="https://arquitechthor.github.io/assets/js/core/bootstrap.min.js"></script>
+  <script src="https://arquitechthor.github.io/assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="https://arquitechthor.github.io/assets/js/plugins/smooth-scrollbar.min.js"></script>
   <script>
     var win = navigator.platform.indexOf('Win') > -1;
     if (win && document.querySelector('#sidenav-scrollbar')) {
@@ -84,7 +115,7 @@
   <!-- Github buttons -->
   <script async defer src="https://buttons.github.io/buttons.js"></script>
   <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
-  <script src="assets/js/soft-ui-dashboard.min.js?v=1.0.7"></script>
+  <script src="https://arquitechthor.github.io/assets/js/soft-ui-dashboard.min.js?v=1.0.7"></script>
 </body>
 
 </html>
