@@ -1,0 +1,241 @@
+/* ============================================================
+   Héctor Guzmán (arquitechthor) — arquitechthor.github.io
+   Misma paleta que kopi-web y aws-cert-study (derivada de la
+   mascota de Kopi: cian, violeta y magenta sobre azul casi negro)
+   para que los tres sitios se sientan de la misma familia.
+   ============================================================ */
+
+:root {
+  --bg: #070a14;
+  --bg-alt: #0b0f20;
+  --surface: #10142a;
+  --surface-2: #161b38;
+  --border: rgba(148, 163, 184, 0.14);
+  --border-strong: rgba(148, 163, 184, 0.28);
+  --text: #f1f5f9;
+  --text-muted: #a3adc2;
+  --text-faint: #6b7490;
+
+  --cyan: #22d3ee;
+  --cyan-strong: #67e8f9;
+  --violet: #a855f7;
+  --violet-strong: #c084fc;
+  --magenta: #fb7185;
+
+  --gradient-brand: linear-gradient(135deg, var(--cyan) 0%, var(--violet) 55%, var(--magenta) 100%);
+  --gradient-radial: radial-gradient(circle at 30% 20%, rgba(34, 211, 238, 0.18), transparent 45%),
+                     radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.16), transparent 40%),
+                     radial-gradient(circle at 60% 80%, rgba(251, 113, 133, 0.10), transparent 45%);
+
+  --shadow-glow: 0 0 0 1px var(--border), 0 20px 60px -20px rgba(34, 211, 238, 0.25);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--cyan-strong); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img { max-width: 100%; display: block; }
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+section { padding: 96px 0; position: relative; scroll-margin-top: 60px; }
+section + section { border-top: 1px solid var(--border); }
+section:nth-of-type(even) { background: var(--bg-alt); }
+
+.eyebrow {
+  display: inline-block;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cyan-strong);
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin-bottom: 18px;
+}
+
+h1, h2, h3 { line-height: 1.15; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: clamp(26px, 3.4vw, 36px); }
+h3 { font-size: 19px; }
+p { color: var(--text-muted); margin: 0 0 16px; }
+
+.section-head { max-width: 640px; margin: 0 auto 52px; text-align: center; }
+.section-head p { font-size: 16px; }
+
+.gradient-text {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Nav ─────────────────────────────────────────────────── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+  background: rgba(7, 10, 20, 0.82);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; color: var(--text); }
+.nav-brand:hover { text-decoration: none; }
+.nav-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.nav-links { display: flex; align-items: center; gap: 28px; }
+.nav-links a { color: var(--text-muted); font-size: 14px; font-weight: 500; }
+.nav-links a:hover { color: var(--text); text-decoration: none; }
+.nav-toggle { display: none; }
+
+@media (max-width: 760px) {
+  .nav-links { display: none; }
+  .nav-links.nav-links-open {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
+    position: absolute; top: 58px; right: 24px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px;
+  }
+  .nav-toggle {
+    display: inline-flex; background: none; border: 1px solid var(--border-strong);
+    color: var(--text); border-radius: 8px; padding: 8px 10px; cursor: pointer;
+  }
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 20px; border-radius: 10px; font-size: 14.5px; font-weight: 700;
+  border: 1px solid transparent; cursor: pointer; white-space: nowrap;
+  transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.btn:hover { text-decoration: none; }
+.btn-primary {
+  background: var(--gradient-brand); color: #04060c;
+  box-shadow: 0 10px 30px -10px rgba(34, 211, 238, 0.5);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 34px -10px rgba(168, 85, 247, 0.55); }
+.btn-secondary {
+  background: var(--surface-2); color: var(--text); border-color: var(--border-strong);
+}
+.btn-secondary:hover { border-color: var(--cyan); }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+
+/* ── Hero / Sobre mí ─────────────────────────────────────── */
+.hero {
+  padding: 88px 0 80px;
+  background: var(--gradient-radial), var(--bg);
+}
+.about-grid { display: grid; grid-template-columns: 280px 1fr; gap: 48px; align-items: center; }
+.about-photo { position: relative; width: 240px; height: 240px; margin: 0 auto; }
+.about-photo::before {
+  content: ""; position: absolute; inset: -12%;
+  background: var(--gradient-brand); filter: blur(70px); opacity: 0.25; border-radius: 50%;
+}
+.about-photo img {
+  position: relative; width: 240px; height: 240px; border-radius: 50%; object-fit: cover;
+  border: 3px solid transparent;
+  background: linear-gradient(var(--bg), var(--bg)) padding-box, var(--gradient-brand) border-box;
+}
+.hero h1 { font-size: clamp(38px, 5.5vw, 58px); }
+.hero-sub { font-size: 20px; color: var(--text); font-weight: 600; margin-bottom: 14px; }
+.hero-desc { font-size: 16.5px; max-width: 620px; }
+.about-links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 22px; }
+
+@media (max-width: 760px) {
+  .about-grid { grid-template-columns: 1fr; text-align: center; gap: 32px; }
+  .hero-desc { margin-left: auto; margin-right: auto; }
+  .about-links { justify-content: center; }
+}
+
+/* ── Proyectos (Kopi Tools / Apuntes AWS) ────────────────── */
+.project {
+  display: grid; grid-template-columns: 1fr 0.8fr; gap: 56px; align-items: center;
+}
+.project-visual { display: flex; justify-content: center; }
+.project-visual img {
+  width: 100%; max-width: 360px; height: auto; aspect-ratio: 1 / 1; object-fit: cover;
+  border-radius: 28px; box-shadow: var(--shadow-glow);
+}
+.project-points { list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 10px; }
+.project-points li { color: var(--text-muted); font-size: 15px; padding-left: 26px; position: relative; }
+.project-points li::before {
+  content: "▸"; position: absolute; left: 4px; color: var(--cyan-strong);
+}
+.project-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* Tarjeta de las certificaciones que cubre aws-cert-study, en lugar de una imagen. */
+.cert-codes {
+  width: 100%; max-width: 360px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+.cert-code {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 22px 16px; text-align: center;
+}
+.cert-code strong {
+  display: block; font-size: 22px; font-weight: 800; line-height: 1.1; margin-bottom: 6px;
+  background: var(--gradient-brand); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.cert-code span { font-size: 12.5px; color: var(--text-muted); }
+
+@media (max-width: 860px) {
+  .project { grid-template-columns: 1fr; gap: 36px; }
+  .project-visual { order: -1; }
+  .project-visual img { max-width: 260px; }
+}
+
+/* ── Certificaciones ─────────────────────────────────────── */
+.grid { display: grid; gap: 20px; }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 960px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .grid-4 { grid-template-columns: 1fr; } }
+
+.badge-card {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 26px 20px; color: var(--text);
+  transition: border-color .15s ease, transform .15s ease;
+}
+.badge-card:hover { border-color: var(--cyan); transform: translateY(-2px); text-decoration: none; }
+.badge-card img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 18px; }
+.badge-card h3 { font-size: 16px; margin-bottom: 6px; }
+.badge-issuer { font-size: 13px; color: var(--text-muted); margin: 0 0 12px; }
+.badge-kind {
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--violet-strong); margin-bottom: 8px;
+}
+.badge-dates { font-size: 12.5px; color: var(--text-faint); margin: auto 0 0; }
+.badges-foot { text-align: center; margin-top: 36px; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+footer { padding: 40px 0; border-top: 1px solid var(--border); }
+footer .container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.footer-brand { font-size: 13.5px; color: var(--text-faint); }
+.footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-links a { font-size: 13.5px; color: var(--text-muted); }
