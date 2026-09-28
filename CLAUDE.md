@@ -21,7 +21,7 @@ assets/
   arquitechthor.jpg      # profile photo (also the source of the favicons)
   kopi-mascot.jpg        # 560px downscale of kopi-web/assets/kopi-mascot.png
   insignias/*.png        # Credly badge images, downscaled to 240px
-  nav.js                 # mobile menu toggle
+  nav.js                 # mobile menu toggle + active-link highlight (same block as kopi-web and aws-cert-study; policy "Mismo menú y pie en las tres webs" in ../kopi-docs/politicas.md)
 ```
 
 ## Relationship with the other sites
