@@ -17,6 +17,8 @@ named `aws-cert-study` or `arquitechthor` here — they would shadow those proje
 ```
 index.html          # single page: #top (Sobre mí hero) → #kopi → #apuntes-aws → #certificaciones
 styles.css          # same palette/tokens as kopi-web and aws-cert-study (copied, not shared)
+robots.txt          # the domain-wide robots.txt (crawlers only read /robots.txt): lists this site's sitemap.xml and aws-cert-study's
+sitemap.xml         # just the home page; update <lastmod> when index.html changes
 assets/
   arquitechthor.jpg      # profile photo (also the source of the favicons)
   kopi-mascot.jpg        # 560px downscale of kopi-web/assets/kopi-mascot.png
