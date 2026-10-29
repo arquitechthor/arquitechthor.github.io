@@ -31,6 +31,7 @@
   --radius: 16px;
   --radius-sm: 10px;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -271,6 +272,156 @@ section.projects-intro { padding: 72px 0; }
 }
 .badge-dates { font-size: 12.5px; color: var(--text-faint); margin: auto 0 0; }
 .badges-foot { text-align: center; margin-top: 36px; }
+
+/* ── Conocimiento ────────────────────────────────────────── */
+/* Copiado de kopi-web (de donde vino la sección); .grid-3, .card y las utilidades solo las
+   usa Conocimiento en esta web. */
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 860px) { .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .grid-3 { grid-template-columns: 1fr; } }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 26px; transition: border-color .15s ease, transform .15s ease;
+}
+.card:hover { border-color: var(--border-strong); transform: translateY(-2px); text-decoration: none; }
+.center { text-align: center; }
+.text-faint { color: var(--text-faint); }
+
+/* Tarjeta de Tema: la portada ocupa toda la tarjeta; el título + ícono van superpuestos
+   abajo sobre un panel negro semitransparente para legibilidad con cualquier portada. */
+.card-tema {
+  padding: 0; overflow: hidden; display: block; position: relative;
+  min-height: 260px; background: var(--gradient-brand);
+}
+.card-tema img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.card-tema-caption {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.55));
+  backdrop-filter: blur(2px);
+}
+.card-tema-caption .card-tema-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.card-tema-caption h3 { margin: 0; font-size: 17px; color: #fff; }
+
+.tema-header { padding: 28px 0 0; }
+.tema-cover {
+  width: 100%; max-height: 340px; object-fit: cover; border-radius: var(--radius);
+  margin-bottom: 32px; border: 1px solid var(--border);
+}
+#tema-detail-section { padding-top: 24px; }
+#tema-detail h1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.subtopic-list { display: flex; flex-direction: column; gap: 14px; }
+.subtopic-accordion {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 4px 22px;
+}
+.subtopic-accordion > summary {
+  cursor: pointer; padding: 16px 0; list-style: none;
+}
+.subtopic-accordion > summary::-webkit-details-marker { display: none; }
+.subtopic-accordion > summary::before { content: '▸ '; color: var(--cyan-strong); }
+.subtopic-accordion[open] > summary::before { content: '▾ '; }
+/* Reset del <h2> dentro de summary — mismo aspecto que el texto plano de antes, el heading es
+   solo semántico (ver renderSubtopic en conocimiento.js). */
+.subtopic-accordion > summary h2 {
+  display: inline; margin: 0; font: inherit; font-weight: 700; font-size: 16px; color: var(--text);
+}
+.subtopic-body { padding: 0 0 20px; }
+
+.resource-list { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+.resource-item {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 16px 18px;
+}
+.resource-item h3 { margin: 0 0 10px; font-size: 14.5px; font-weight: 700; color: var(--text); }
+.resource-item audio, .resource-item video, .resource-item img { width: 100%; border-radius: var(--radius-sm); }
+/* El <summary> ya no es la parte visible/clicable (eso son los botones de la toolbar, ver
+   más abajo) — se deja vacío en el HTML y oculto aquí solo para que el navegador no dibuje su
+   triángulo/fila por defecto. `details.open` lo decide setupResourceToolbar a mano. */
+.resource-richtext-details > summary { display: none; }
+.resource-richtext-details .resource-richtext { margin-top: 14px; }
+.resource-content-questions { display: none; }
+.resource-richtext-details[data-mode="questions"] .resource-content-text { display: none; }
+.resource-richtext-details[data-mode="questions"] .resource-content-questions { display: block; }
+/* Fila Mostrar/Ocultar + Preguntas de repaso + Exportar a Noria: botones normales, HERMANOS
+   del <details> (no dentro, y ya no lo envuelven) — así nunca se separan entre sí sea cual sea
+   el estado del <details> (colapsado, con el texto o con las preguntas a todo el ancho de la
+   tarjeta debajo). El aspecto de cada botón (qué mitad de su etiqueta se ve) lo decide la
+   clase .is-open que le pone JS (syncToolbarButtons), no un selector de atributo del
+   <details> — por eso puede vivir fuera de él. */
+.resource-richtext-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.richtext-toggle-label { display: inline-flex; align-items: center; gap: 6px; }
+.resource-toggle-btn .richtext-toggle-hide,
+.resource-questions-btn .questions-toggle-hide { display: none; }
+.resource-toggle-btn.is-open .richtext-toggle-show,
+.resource-questions-btn.is-open .questions-toggle-show { display: none; }
+.resource-toggle-btn.is-open .richtext-toggle-hide,
+.resource-questions-btn.is-open .questions-toggle-hide { display: inline-flex; }
+.icon-eye, .icon-export, .icon-question { flex-shrink: 0; }
+.resource-questions-list { margin: 0; padding-left: 1.4em; }
+.resource-questions-list li { margin: 0 0 10px; }
+.resource-questions-list li:last-child { margin-bottom: 0; }
+/* El texto enriquecido se renderiza sobre "papel" (fondo claro) para que el formato del
+   editor del administrador —encabezados, listas, cita, código— se lea igual aquí, sin que
+   el tema oscuro de la página lo aplaste. deltaToHtml (kopi-media-admin) genera p / h1-h6 /
+   ul / ol / blockquote / pre>code / code / a / strong / em / u / s. */
+.resource-richtext {
+  background: #fff;
+  color: #1e293b;
+  font-size: 14.5px;
+  line-height: 1.65;
+  padding: 18px 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow-wrap: break-word;
+}
+.resource-richtext > :first-child { margin-top: 0; }
+.resource-richtext > :last-child { margin-bottom: 0; }
+.resource-richtext p { color: inherit; margin: 0 0 12px; }
+.resource-richtext h1,
+.resource-richtext h2,
+.resource-richtext h3,
+.resource-richtext h4,
+.resource-richtext h5,
+.resource-richtext h6 {
+  color: #0f172a; line-height: 1.25; margin: 20px 0 10px; font-weight: 700; letter-spacing: -0.01em;
+}
+.resource-richtext h1 { font-size: 1.6em; }
+.resource-richtext h2 { font-size: 1.35em; }
+.resource-richtext h3 { font-size: 1.15em; }
+.resource-richtext h4, .resource-richtext h5, .resource-richtext h6 { font-size: 1em; }
+.resource-richtext ul, .resource-richtext ol { margin: 0 0 12px; padding-left: 1.6em; }
+.resource-richtext li { margin: 3px 0; }
+.resource-richtext strong { color: #0f172a; }
+.resource-richtext a { color: #0b63c4; text-decoration: underline; }
+.resource-richtext blockquote {
+  margin: 0 0 12px; padding: 4px 0 4px 16px;
+  border-left: 4px solid #cbd5e1; color: #475569;
+}
+/* Código en línea: gris claro, como en el editor snow de Quill. */
+.resource-richtext code {
+  font-family: var(--font-mono); font-size: 0.86em;
+  background: #eef1f5; color: #b02a5b;
+  padding: 2px 5px; border-radius: 4px;
+}
+/* Bloque de código: fondo oscuro del editor, aquí sí se distingue del resto del texto. */
+.resource-richtext pre {
+  background: #23241f; color: #f8f8f2;
+  margin: 0 0 12px; padding: 14px 16px;
+  border-radius: 8px; overflow-x: auto; line-height: 1.5;
+}
+.resource-richtext pre code {
+  background: none; color: inherit; padding: 0; font-size: 0.85em;
+}
+.resource-embed { position: relative; width: 100%; padding-top: 56.25%; /* 16:9 */ }
+.resource-embed iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: var(--radius-sm);
+}
 
 /* ── Footer ──────────────────────────────────────────────── */
 footer { padding: 40px 0; border-top: 1px solid var(--border); }

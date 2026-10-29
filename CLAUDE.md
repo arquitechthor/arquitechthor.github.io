@@ -15,16 +15,19 @@ Because it's the user site, the account's project sites are served under it:
 named `aws-cert-study` or `arquitechthor` here — they would shadow those project sites.
 
 ```
-index.html          # single page: #top (Sobre mí hero) → #certificaciones → #proyectos (intro) → #apuntes-aws → #kopi → #kopi-chess
-                    # menu: Inicio · Certificaciones · "Mis proyectos" dropdown (Todos, Apuntes AWS, Kopi Tools, Kopi Chess)
+index.html          # home: #top (Sobre mí hero) → #certificaciones → #proyectos (intro) → #apuntes-aws → #kopi → #kopi-chess → #conocimiento
+                    # menu: Inicio · Certificaciones · "Mis proyectos" dropdown (Todos, Apuntes AWS, Kopi Tools, Kopi Chess) · Conocimiento
+conocimiento.html   # Tema detail page (?tema=<id>), rendered client-side by assets/conocimiento.js — see "Conocimiento"
 styles.css          # same palette/tokens as kopi-web and aws-cert-study (copied, not shared)
 robots.txt          # the domain-wide robots.txt (crawlers only read /robots.txt): lists this site's sitemap.xml and aws-cert-study's
-sitemap.xml         # just the home page; update <lastmod> when index.html changes
+sitemap.xml         # home + one URL per Conocimiento Tema; regenerate with `node scripts/generate-sitemap.mjs` (reads the API) and commit it
+scripts/generate-sitemap.mjs  # no deps, Node 18+; there's no CI here, so run it by hand when index.html or the Temas change
 assets/
   arquitechthor.jpg      # profile photo (also the source of the favicons)
   kopi-mascot.jpg        # 560px downscale of kopi-web/assets/kopi-mascot.png
   kopi-chess-review.jpg  # 720px downscale of kopi-chess/docs/img/review.png
   insignias/*.png        # Credly badge images, downscaled to 240px
+  conocimiento.js        # fetches the public Conocimiento API of Kopi — see "Conocimiento"
   nav.js                 # mobile menu toggle + active-link highlight (same block as kopi-web and aws-cert-study; policy "Mismo menú y pie en las tres webs" in ../kopi-docs/politicas.md) + the "Mis proyectos" dropdown, which only this site has
 ```
 
@@ -32,7 +35,25 @@ assets/
 
 - This page replaced the old `#sobre-mi` section of `kopi-web`. Both `kopi-web` and
   `aws-cert-study` link their "Sobre mí" entries here.
-- Kopi's Conocimiento section stays in `kopi-web` (it needs the Kopi backend/DB).
+- Conocimiento moved here from `kopi-web` on 2026-10-29. `kopitools.link/conocimiento.html?tema=<id>`
+  and `kopitools.link/#conocimiento` redirect here, and kopi-web's menus link to `#conocimiento`.
+
+## Conocimiento
+
+`#conocimiento` (Tema card grid) and `conocimiento.html` (one Tema) are rendered client-side by
+`assets/conocimiento.js`, copied from kopi-web together with its CSS (the "Conocimiento" block in
+`styles.css`). The content is managed in Kopi Media Admin and read from the **public,
+unauthenticated** Kopi API: `GET https://api.kopitools.link/public/knowledge/topics`,
+`.../topics/{id}` and `.../resources/{id}` (see
+`kopi-media-admin/documentation/arquitectura/rutas-api.md#conocimiento`), which only return the
+content of one fixed `ownerId`. Cards use the API's `thumbnailUrl` and fall back to `imageUrl`.
+**Two-tier load**: `topics/{id}` returns only the structure; each resource's body (rich-text HTML
+or a presigned S3 URL, 1 h TTL) is fetched from `resources/{id}` when it's expanded / its Tópico
+is opened. Because those URLs expire, the content can't be snapshotted into static files.
+
+**CORS**: the API (HTTP API `kopi-api`) must keep `https://arquitechthor.github.io` in its
+allow-origins, or every `fetch` fails ("No se pudo cargar…"). For local preview serve on port
+4200 (`python -m http.server 4200`): `http://localhost:4200` is also allowed, other ports aren't.
 
 ## Certificaciones
 
