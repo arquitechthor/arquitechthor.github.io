@@ -15,8 +15,8 @@ Because it's the user site, the account's project sites are served under it:
 named `aws-cert-study` or `arquitechthor` here — they would shadow those project sites.
 
 ```
-index.html          # home: #top (Sobre mí hero) → #certificaciones → #conocimiento → #proyectos (intro) → #apuntes-aws → #kopi → #kopi-chess
-                    # menu: Inicio · Certificaciones · Conocimiento · "Mis proyectos" dropdown (Todos, Apuntes AWS, Kopi Tools, Kopi Chess)
+index.html          # home: #top (Sobre mí hero) → #certificaciones → #conocimiento → #proyectos (intro) → #apuntes-aws → #kopi → #kopi-chess → #prompt-quest
+                    # menu: Inicio · Certificaciones · Conocimiento · "Mis proyectos" dropdown (Todos, Apuntes AWS, Kopi Tools, Kopi Chess, Prompt Quest)
 conocimiento.html   # Tema detail page (?tema=<id>), rendered client-side by assets/conocimiento.js — see "Conocimiento"
 styles.css          # same palette/tokens as kopi-web and aws-cert-study (copied, not shared)
 robots.txt          # the domain-wide robots.txt (crawlers only read /robots.txt): lists this site's sitemap.xml and aws-cert-study's
@@ -26,6 +26,7 @@ assets/
   arquitechthor.jpg      # profile photo (also the source of the favicons)
   kopi-mascot.jpg        # 560px downscale of kopi-web/assets/kopi-mascot.png
   kopi-chess-review.jpg  # 720px downscale of kopi-chess/docs/img/review.png
+  prompt-quest-arena.jpg # 720px downscale of prompt-quest/docs/img/stand-partida.png
   insignias/*.png        # Credly badge images, downscaled to 240px
   conocimiento.js        # fetches the public Conocimiento API of Kopi — see "Conocimiento"
   nav.js                 # mobile menu toggle + active-link highlight (same block as kopi-web and aws-cert-study; policy "Mismo menú y pie en las tres webs" in ../kopi-docs/politicas.md) + the "Mis proyectos" dropdown, which only this site has

@@ -61,6 +61,7 @@
           <a href="#apuntes-aws">Apuntes AWS</a>
           <a href="#kopi">Kopi Tools</a>
           <a href="#kopi-chess">Kopi Chess</a>
+          <a href="#prompt-quest">Prompt Quest</a>
         </div>
       </div>
     </div>
@@ -156,11 +157,12 @@
     <div class="section-head">
       <span class="eyebrow">Mis proyectos</span>
       <h2>Estos son algunos de mis proyectos</h2>
-      <p>Apuntes AWS y Kopi Chess tienen el código público en GitHub.</p>
+      <p>Apuntes AWS, Kopi Chess y Prompt Quest tienen el código público en GitHub.</p>
       <div class="projects-nav">
         <a class="btn btn-secondary" href="#apuntes-aws">Apuntes AWS</a>
         <a class="btn btn-secondary" href="#kopi">Kopi Tools</a>
         <a class="btn btn-secondary" href="#kopi-chess">Kopi Chess</a>
+        <a class="btn btn-secondary" href="#prompt-quest">Prompt Quest</a>
       </div>
     </div>
   </div>
@@ -248,6 +250,33 @@
     </div>
     <div class="project-visual">
       <img class="project-shot" src="assets/kopi-chess-review.jpg" width="720" height="554" alt="Revisión de una partida en Kopi Chess: tablero, gráfica de evaluación, precisión de cada bando y veredicto de cada jugada" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section id="prompt-quest">
+  <div class="container project">
+    <div>
+      <span class="eyebrow">Proyecto · Prompt Quest</span>
+      <h2>Tu prompt, tu estrategia, tu agente</h2>
+      <p>
+        Un juego para eventos: cada participante escribe en el móvil una estrategia en lenguaje
+        natural, una IA en Amazon Bedrock la convierte en el comportamiento de su agente, y hasta
+        16 agentes se enfrentan en una arena que se ve en directo en una pantalla grande. Cada
+        jugada muestra qué regla de la estrategia la decidió.
+      </p>
+      <ul class="project-points">
+        <li>El LLM compila, no interpreta: una llamada a Bedrock por estrategia y un motor determinista para la partida.</li>
+        <li>Cada partida se simula una vez y se reproduce sincronizada en todas las pantallas desde CloudFront, sin WebSockets.</li>
+        <li>Serverless en AWS con CDK y arquitectura hexagonal; el prompt se trata como dato no confiable y la inyección se detecta.</li>
+      </ul>
+      <div class="project-actions">
+        <a class="btn btn-primary" href="https://github.com/arquitechthor/prompt-quest" target="_blank" rel="noopener">Ver en GitHub →</a>
+        <a class="btn btn-secondary" href="https://github.com/arquitechthor/prompt-quest#arquitectura" target="_blank" rel="noopener">Arquitectura</a>
+      </div>
+    </div>
+    <div class="project-visual">
+      <img class="project-shot" src="assets/prompt-quest-arena.jpg" width="720" height="405" alt="Pantalla del stand de Prompt Quest: la arena con los agentes en plena partida, qué decide cada agente y por qué, y la clasificación" loading="lazy">
     </div>
   </div>
 </section>
