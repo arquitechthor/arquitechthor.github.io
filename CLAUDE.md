@@ -15,8 +15,8 @@ Because it's the user site, the account's project sites are served under it:
 named `aws-cert-study` or `arquitechthor` here — they would shadow those project sites.
 
 ```
-index.html          # home: #top (Sobre mí hero) → #certificaciones → #proyectos (intro) → #apuntes-aws → #kopi → #kopi-chess → #conocimiento
-                    # menu: Inicio · Certificaciones · "Mis proyectos" dropdown (Todos, Apuntes AWS, Kopi Tools, Kopi Chess) · Conocimiento
+index.html          # home: #top (Sobre mí hero) → #certificaciones → #conocimiento → #proyectos (intro) → #apuntes-aws → #kopi → #kopi-chess
+                    # menu: Inicio · Certificaciones · Conocimiento · "Mis proyectos" dropdown (Todos, Apuntes AWS, Kopi Tools, Kopi Chess)
 conocimiento.html   # Tema detail page (?tema=<id>), rendered client-side by assets/conocimiento.js — see "Conocimiento"
 styles.css          # same palette/tokens as kopi-web and aws-cert-study (copied, not shared)
 robots.txt          # the domain-wide robots.txt (crawlers only read /robots.txt): lists this site's sitemap.xml and aws-cert-study's
