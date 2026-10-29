@@ -206,12 +206,11 @@ p { color: var(--text-muted); margin: 0 0 16px; }
 }
 
 /* ── Proyectos (Apuntes AWS / Kopi Tools / Kopi Chess) ───── */
-/* Presentación de los proyectos: solo un encabezado, pegado a la primera sección de proyecto
-   y con su mismo fondo (las secciones alternan fondo por posición). */
-section.projects-intro { padding-bottom: 0; background: var(--bg); }
+/* Presentación de los proyectos: una franja más baja, con el fondo alternativo
+   (--bg-alt, por su posición) que la separa de las secciones de proyecto. */
+section.projects-intro { padding: 72px 0; }
 .projects-intro .section-head { margin-bottom: 0; }
 .projects-nav { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
-.projects-intro + section { border-top: 0; padding-top: 56px; }
 .project {
   display: grid; grid-template-columns: 1fr 0.8fr; gap: 56px; align-items: center;
 }
