@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Héctor Guzmán (arquitechthor) — Software Developer</title>
-<meta name="description" content="Héctor Guzmán, Software Developer: arquitecto de software y cloud, ingeniero de microservicios, Scrum Master y profesor. Creador de Kopi Tools y de los Apuntes AWS para certificaciones.">
+<meta name="description" content="Héctor Guzmán, Software Developer: arquitecto de software y cloud, ingeniero de microservicios, Scrum Master y profesor. Creador de los Apuntes AWS para certificaciones, Kopi Tools y Kopi Chess.">
 <link rel="canonical" href="https://arquitechthor.github.io/">
 <meta property="og:type" content="profile">
 <meta property="og:site_name" content="arquitechthor">
 <meta property="og:title" content="Héctor Guzmán (arquitechthor) — Software Developer">
-<meta property="og:description" content="Arquitectura de software y cloud, microservicios, Scrum y docencia. Creador de Kopi Tools y de los Apuntes AWS.">
+<meta property="og:description" content="Arquitectura de software y cloud, microservicios, Scrum y docencia. Creador de los Apuntes AWS, Kopi Tools y Kopi Chess.">
 <meta property="og:url" content="https://arquitechthor.github.io/">
 <meta property="og:image" content="https://arquitechthor.github.io/assets/arquitechthor.jpg">
 <meta property="og:locale" content="es_ES">
@@ -51,9 +51,16 @@
     </a>
     <div class="nav-links">
       <a href="#top">Inicio</a>
-      <a href="#kopi">Kopi Tools</a>
-      <a href="#apuntes-aws">Apuntes AWS</a>
       <a href="#certificaciones">Certificaciones</a>
+      <div class="nav-group">
+        <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navProyectos">Mis proyectos <span aria-hidden="true">▾</span></button>
+        <div class="nav-submenu" id="navProyectos">
+          <a href="#proyectos">Todos</a>
+          <a href="#apuntes-aws">Apuntes AWS</a>
+          <a href="#kopi">Kopi Tools</a>
+          <a href="#kopi-chess">Kopi Chess</a>
+        </div>
+      </div>
     </div>
     <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
   </div>
@@ -83,65 +90,6 @@
     </div>
   </div>
 </header>
-
-<section id="kopi">
-  <div class="container project">
-    <div>
-      <span class="eyebrow">Proyecto · Kopi Tools</span>
-      <h2>Tus herramientas, tus datos</h2>
-      <p>
-        Una suite personal para organizar metas, agenda, enlaces, vídeos de YouTube, fotos,
-        imágenes y documentos — en la web y en Android, con los datos de cada usuario aislados
-        y sin anuncios ni seguimiento. Incluye además una base de conocimiento pública con
-        notas de estudio y documentación.
-      </p>
-      <ul class="project-points">
-        <li>Arquitectura 100% serverless en AWS: Cognito, API Gateway, Lambda, DynamoDB, S3, CloudFront y Bedrock.</li>
-        <li>App web en Angular y app Android en React + Capacitor sobre el mismo backend.</li>
-        <li>Construido de principio a fin con Claude Code como copiloto de desarrollo.</li>
-      </ul>
-      <div class="project-actions">
-        <a class="btn btn-primary" href="https://kopitools.link">Visitar Kopi Tools →</a>
-        <a class="btn btn-secondary" href="https://kopitools.link/#conocimiento">Conocimiento</a>
-      </div>
-    </div>
-    <div class="project-visual">
-      <img src="assets/kopi-mascot.jpg" width="560" height="560" alt="Kopi, la mascota de Kopi Tools" loading="lazy">
-    </div>
-  </div>
-</section>
-
-<section id="apuntes-aws">
-  <div class="container project">
-    <div>
-      <span class="eyebrow">Material de estudio · Apuntes AWS</span>
-      <h2>Apuntes para certificaciones de AWS</h2>
-      <p>
-        Mis notas de estudio de los servicios de AWS que entran en las guías oficiales de
-        examen, organizadas por servicio, categoría y certificación, con preguntas de práctica
-        originales para repasar. Proyecto educativo, sin fines comerciales y con licencia
-        CC BY-SA 4.0.
-      </p>
-      <ul class="project-points">
-        <li>Catálogo filtrable por servicio, categoría y certificación.</li>
-        <li>Preguntas tipo examen originales para cada servicio.</li>
-        <li>Se completa servicio a servicio, con las fuentes oficiales citadas.</li>
-      </ul>
-      <div class="project-actions">
-        <a class="btn btn-primary" href="https://arquitechthor.github.io/aws-cert-study/">Ver los apuntes →</a>
-        <a class="btn btn-secondary" href="https://github.com/arquitechthor/aws-cert-study" target="_blank" rel="noopener">Código fuente</a>
-      </div>
-    </div>
-    <div class="project-visual">
-      <div class="cert-codes" aria-label="Certificaciones cubiertas por los apuntes">
-        <div class="cert-code"><strong>CLF · AIF</strong><span>Foundational</span></div>
-        <div class="cert-code"><strong>SAA</strong><span>Solutions Architect Associate</span></div>
-        <div class="cert-code"><strong>DVA</strong><span>Developer Associate</span></div>
-        <div class="cert-code"><strong>SAP</strong><span>Solutions Architect Professional</span></div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section id="certificaciones">
   <div class="container">
@@ -182,6 +130,102 @@
     </div>
     <div class="badges-foot">
       <a class="btn btn-secondary btn-sm" href="https://www.credly.com/users/hector-guzman.61ef69dd" target="_blank" rel="noopener">Ver perfil completo en Credly →</a>
+    </div>
+  </div>
+</section>
+
+<section id="proyectos" class="projects-intro">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Mis proyectos</span>
+      <h2>Estos son algunos de mis proyectos</h2>
+      <p>Apuntes AWS y Kopi Chess tienen el código público en GitHub.</p>
+    </div>
+  </div>
+</section>
+
+<section id="apuntes-aws">
+  <div class="container project">
+    <div>
+      <span class="eyebrow">Material de estudio · Apuntes AWS</span>
+      <h2>Apuntes para certificaciones de AWS</h2>
+      <p>
+        Mis notas de estudio de los servicios de AWS que entran en las guías oficiales de
+        examen, organizadas por servicio, categoría y certificación, con preguntas de práctica
+        originales para repasar. Proyecto educativo, sin fines comerciales y con licencia
+        CC BY-SA 4.0.
+      </p>
+      <ul class="project-points">
+        <li>Catálogo filtrable por servicio, categoría y certificación.</li>
+        <li>Preguntas tipo examen originales para cada servicio.</li>
+        <li>Se completa servicio a servicio, con las fuentes oficiales citadas.</li>
+      </ul>
+      <div class="project-actions">
+        <a class="btn btn-primary" href="https://arquitechthor.github.io/aws-cert-study/">Ver los apuntes →</a>
+        <a class="btn btn-secondary" href="https://github.com/arquitechthor/aws-cert-study" target="_blank" rel="noopener">Código fuente</a>
+      </div>
+    </div>
+    <div class="project-visual">
+      <div class="cert-codes" aria-label="Certificaciones cubiertas por los apuntes">
+        <div class="cert-code"><strong>CLF · AIF</strong><span>Foundational</span></div>
+        <div class="cert-code"><strong>SAA</strong><span>Solutions Architect Associate</span></div>
+        <div class="cert-code"><strong>DVA</strong><span>Developer Associate</span></div>
+        <div class="cert-code"><strong>SAP</strong><span>Solutions Architect Professional</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="kopi">
+  <div class="container project">
+    <div>
+      <span class="eyebrow">Proyecto · Kopi Tools</span>
+      <h2>Tus herramientas, tus datos</h2>
+      <p>
+        Una suite personal para organizar metas, agenda, enlaces, vídeos de YouTube, fotos,
+        imágenes y documentos — en la web y en Android, con los datos de cada usuario aislados
+        y sin anuncios ni seguimiento. Incluye además una base de conocimiento pública con
+        notas de estudio y documentación.
+      </p>
+      <ul class="project-points">
+        <li>Arquitectura 100% serverless en AWS: Cognito, API Gateway, Lambda, DynamoDB, S3, CloudFront y Bedrock.</li>
+        <li>App web en Angular y app Android en React + Capacitor sobre el mismo backend.</li>
+        <li>Construido de principio a fin con Claude Code como copiloto de desarrollo.</li>
+      </ul>
+      <div class="project-actions">
+        <a class="btn btn-primary" href="https://kopitools.link">Visitar Kopi Tools →</a>
+        <a class="btn btn-secondary" href="https://kopitools.link/#conocimiento">Conocimiento</a>
+      </div>
+    </div>
+    <div class="project-visual">
+      <img src="assets/kopi-mascot.jpg" width="560" height="560" alt="Kopi, la mascota de Kopi Tools" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section id="kopi-chess">
+  <div class="container project">
+    <div>
+      <span class="eyebrow">Proyecto · Kopi Chess</span>
+      <h2>Ajedrez y código, de código abierto</h2>
+      <p>
+        Juega al ajedrez contra cinco bots en el navegador — de uno que juega como un niño que
+        acaba de aprender a Stockfish a plena fuerza — y después revisa cada partida: cada jugada
+        recibe un veredicto y la mejor alternativa del motor. Funciona en tu máquina con Docker;
+        nada sale de ella.
+      </p>
+      <ul class="project-points">
+        <li>Revisión de cada partida: veredictos, apertura, precisión de cada bando y gráfica de posibilidades.</li>
+        <li>Importa y exporta PGN, historial de partidas, API REST e interfaz en inglés y español.</li>
+        <li>Hecho para leerse: Java 25, Spring Boot 4 y arquitectura hexagonal verificada con ArchUnit.</li>
+      </ul>
+      <div class="project-actions">
+        <a class="btn btn-primary" href="https://github.com/arquitechthor/kopi-chess" target="_blank" rel="noopener">Ver en GitHub →</a>
+        <a class="btn btn-secondary" href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/arquitectura.md" target="_blank" rel="noopener">Arquitectura</a>
+      </div>
+    </div>
+    <div class="project-visual">
+      <img class="project-shot" src="assets/kopi-chess-review.jpg" width="720" height="554" alt="Revisión de una partida en Kopi Chess: tablero, gráfica de evaluación, precisión de cada bando y veredicto de cada jugada" loading="lazy">
     </div>
   </div>
 </section>

@@ -19,6 +19,32 @@
 })();
 
 /**
+ * Grupo desplegable del menú ("Mis proyectos"): el botón abre/cierra el submenú; se cierra
+ * al elegir un enlace, al hacer clic fuera o con Escape. En móvil styles.css lo muestra
+ * siempre desplegado dentro del panel.
+ */
+(function () {
+  document.querySelectorAll('.nav-group').forEach((grupo) => {
+    const boton = grupo.querySelector('.nav-group-toggle');
+    if (!boton) return;
+    const poner = (abierto) => {
+      grupo.classList.toggle('nav-group-open', abierto);
+      boton.setAttribute('aria-expanded', String(abierto));
+    };
+    boton.addEventListener('click', () => poner(!grupo.classList.contains('nav-group-open')));
+    // Tras elegir un enlace se oculta aunque el ratón siga encima (anula el :hover hasta salir).
+    grupo.addEventListener('click', (e) => {
+      if (!e.target.closest('a')) return;
+      poner(false);
+      grupo.classList.add('nav-group-closed');
+    });
+    grupo.addEventListener('mouseleave', () => grupo.classList.remove('nav-group-closed'));
+    document.addEventListener('click', (e) => { if (!grupo.contains(e.target)) poner(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') poner(false); });
+  });
+})();
+
+/**
  * Enlace activo del menú (igual en kopi-web, aws-cert-study y arquitechthor.github.io).
  * Los enlaces a otra página pueden llevar aria-current="page" en el HTML. Los enlaces a una
  * sección de esta misma página (#id) reciben aria-current="location" mientras esa sección

@@ -115,6 +115,25 @@ p { color: var(--text-muted); margin: 0 0 16px; }
 .nav-links a:hover, .nav-links a[aria-current] { color: var(--text); text-decoration: none; }
 .nav-toggle { display: none; }
 
+/* Grupo desplegable "Mis proyectos": se abre con clic (assets/nav.js) o al pasar el ratón. */
+.nav-group { position: relative; }
+.nav-group-toggle {
+  background: none; border: 0; padding: 0; cursor: pointer; font: inherit;
+  color: var(--text-muted); font-size: 14px; font-weight: 500;
+}
+.nav-group-toggle span { font-size: 11px; margin-left: 2px; }
+.nav-group-toggle:hover, .nav-group:has(a[aria-current]) > .nav-group-toggle { color: var(--text); }
+.nav-submenu {
+  display: none; flex-direction: column; gap: 12px;
+  position: absolute; top: calc(100% + 12px); left: -16px; min-width: 170px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+}
+/* Puente invisible para que el hover no se pierda en el hueco entre botón y submenú. */
+.nav-submenu::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
+.nav-group:hover .nav-submenu, .nav-group.nav-group-open .nav-submenu { display: flex; }
+.nav-group.nav-group-closed:not(.nav-group-open) .nav-submenu { display: none; }
+
 @media (max-width: 760px) {
   .nav-inner { padding: 12px 16px; }
   .nav-links { display: none; }
@@ -124,6 +143,16 @@ p { color: var(--text-muted); margin: 0 0 16px; }
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 12px; padding: 16px 20px;
   }
+  /* En el panel móvil el submenú va siempre desplegado, sangrado bajo su título. */
+  .nav-group-toggle { pointer-events: none; }
+  .nav-group-toggle span { display: none; }
+  .nav-submenu {
+    display: flex; position: static; min-width: 0; margin-top: 12px;
+    background: none; border: 0; border-left: 1px solid var(--border); border-radius: 0;
+    padding: 0 0 0 14px;
+  }
+  .nav-submenu::before { display: none; }
+  .nav-group.nav-group-closed:not(.nav-group-open) .nav-submenu { display: flex; }
   .nav-toggle {
     display: inline-flex; background: none; border: 1px solid var(--border-strong);
     color: var(--text); border-radius: 8px; padding: 8px 10px; cursor: pointer;
@@ -176,7 +205,12 @@ p { color: var(--text-muted); margin: 0 0 16px; }
   .about-links { justify-content: center; }
 }
 
-/* ── Proyectos (Kopi Tools / Apuntes AWS) ────────────────── */
+/* ── Proyectos (Apuntes AWS / Kopi Tools / Kopi Chess) ───── */
+/* Presentación de los proyectos: solo un encabezado, pegado a la primera sección de proyecto
+   y con su mismo fondo (las secciones alternan fondo por posición). */
+section.projects-intro { padding-bottom: 0; background: var(--bg); }
+.projects-intro .section-head { margin-bottom: 0; }
+.projects-intro + section { border-top: 0; padding-top: 56px; }
 .project {
   display: grid; grid-template-columns: 1fr 0.8fr; gap: 56px; align-items: center;
 }
@@ -185,6 +219,8 @@ p { color: var(--text-muted); margin: 0 0 16px; }
   width: 100%; max-width: 360px; height: auto; aspect-ratio: 1 / 1; object-fit: cover;
   border-radius: 28px; box-shadow: var(--shadow-glow);
 }
+/* Captura de pantalla: conserva su proporción en lugar del recorte cuadrado. */
+.project-visual img.project-shot { max-width: 460px; aspect-ratio: auto; border-radius: var(--radius); }
 .project-points { list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 10px; }
 .project-points li { color: var(--text-muted); font-size: 15px; padding-left: 26px; position: relative; }
 .project-points li::before {
@@ -210,6 +246,7 @@ p { color: var(--text-muted); margin: 0 0 16px; }
   .project { grid-template-columns: 1fr; gap: 36px; }
   .project-visual { order: -1; }
   .project-visual img { max-width: 260px; }
+  .project-visual img.project-shot { max-width: 100%; }
 }
 
 /* ── Certificaciones ─────────────────────────────────────── */

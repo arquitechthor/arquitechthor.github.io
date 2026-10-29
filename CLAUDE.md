@@ -15,15 +15,17 @@ Because it's the user site, the account's project sites are served under it:
 named `aws-cert-study` or `arquitechthor` here — they would shadow those project sites.
 
 ```
-index.html          # single page: #top (Sobre mí hero) → #kopi → #apuntes-aws → #certificaciones
+index.html          # single page: #top (Sobre mí hero) → #certificaciones → #proyectos (intro) → #apuntes-aws → #kopi → #kopi-chess
+                    # menu: Inicio · Certificaciones · "Mis proyectos" dropdown (Todos, Apuntes AWS, Kopi Tools, Kopi Chess)
 styles.css          # same palette/tokens as kopi-web and aws-cert-study (copied, not shared)
 robots.txt          # the domain-wide robots.txt (crawlers only read /robots.txt): lists this site's sitemap.xml and aws-cert-study's
 sitemap.xml         # just the home page; update <lastmod> when index.html changes
 assets/
   arquitechthor.jpg      # profile photo (also the source of the favicons)
   kopi-mascot.jpg        # 560px downscale of kopi-web/assets/kopi-mascot.png
+  kopi-chess-review.jpg  # 720px downscale of kopi-chess/docs/img/review.png
   insignias/*.png        # Credly badge images, downscaled to 240px
-  nav.js                 # mobile menu toggle + active-link highlight (same block as kopi-web and aws-cert-study; policy "Mismo menú y pie en las tres webs" in ../kopi-docs/politicas.md)
+  nav.js                 # mobile menu toggle + active-link highlight (same block as kopi-web and aws-cert-study; policy "Mismo menú y pie en las tres webs" in ../kopi-docs/politicas.md) + the "Mis proyectos" dropdown, which only this site has
 ```
 
 ## Relationship with the other sites
