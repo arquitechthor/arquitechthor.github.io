@@ -35,7 +35,7 @@ assets/
 ## Relationship with the other sites
 
 - This page replaced the old `#sobre-mi` section of `kopi-web`. Both `kopi-web` and
-  `aws-cert-study` link their "Sobre mí" entries here.
+  `aws-cert-study` link their "Arquitechthor" entries here.
 - Conocimiento moved here from `kopi-web` on 2026-10-29. `kopitools.link/conocimiento.html?tema=<id>`
   and `kopitools.link/#conocimiento` redirect here, and kopi-web's menus link to `#conocimiento`.
 
