@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aprendizajes de Kopi Chess — Héctor Guzmán (arquitechthor)</title>
+<meta name="description" content="Caso de estudio de Kopi Chess: arquitectura hexagonal con módulos Maven y ArchUnit, reglas de ajedrez propias verificadas con perft, Java 25, Spring Boot 4, una cola en PostgreSQL con SKIP LOCKED y las lecciones que deja.">
+<link rel="canonical" href="https://arquitechthor.github.io/aprendizajes/kopi-chess.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="arquitechthor">
+<meta property="og:title" content="Aprendizajes de Kopi Chess">
+<meta property="og:description" content="Arquitectura hexagonal en Java 25 y Spring Boot 4, explicada con el código real de un proyecto de ajedrez de código abierto.">
+<meta property="og:url" content="https://arquitechthor.github.io/aprendizajes/kopi-chess.html">
+<meta property="og:image" content="https://arquitechthor.github.io/assets/kopi-chess-review.jpg">
+<meta property="og:locale" content="es_ES">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../assets/favicon-192.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="../#top">
+      <img class="nav-avatar" src="../assets/arquitechthor.jpg" alt="" width="32" height="32">
+      Héctor Guzmán
+    </a>
+    <div class="nav-links">
+      <a href="../#top">Inicio</a>
+      <a href="../#certificaciones">Certificaciones</a>
+      <a href="../#conocimiento">Conocimiento</a>
+      <div class="nav-group">
+        <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navProyectos">Mis proyectos <span aria-hidden="true">▾</span></button>
+        <div class="nav-submenu" id="navProyectos">
+          <a href="../#proyectos">Todos</a>
+          <a href="../#apuntes-aws">Apuntes AWS</a>
+          <a href="../#tech-spider">Tech Spider</a>
+          <a href="../#kopi">Kopi Tools</a>
+          <a href="../#kopi-chess">Kopi Chess</a>
+          <a href="../#prompt-quest">Prompt Quest</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navAprendizajes">Aprendizajes de <span aria-hidden="true">▾</span></button>
+        <div class="nav-submenu" id="navAprendizajes">
+          <a href="kopi-chess.html" aria-current="page">Kopi Chess</a>
+          <a href="kopi-tools.html">Kopi Tools</a>
+          <a href="prompt-quest.html">Prompt Quest</a>
+        </div>
+      </div>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+  </div>
+</nav>
+
+<main>
+<header class="cs-hero">
+  <div class="container">
+    <span class="eyebrow">Aprendizajes de · Kopi Chess</span>
+    <h1><span class="gradient-text">Kopi Chess</span>, un caso de estudio de arquitectura hexagonal</h1>
+    <p class="cs-lead">
+      Kopi Chess es una aplicación de ajedrez de código abierto: juegas contra cinco bots y después
+      revisas cada partida con Stockfish. Pero sobre todo está hecha <strong>para leerse</strong>. Esta
+      página recorre su código real para explicar cómo se construye una arquitectura hexagonal en
+      Java 25 y Spring Boot 4, por qué se tomó cada decisión y qué se puede aprender de ella.
+    </p>
+    <div class="cs-stats" aria-label="Kopi Chess en cifras">
+      <div class="cert-code"><strong>13</strong><span>módulos Maven</span></div>
+      <div class="cert-code"><strong>~17.000</strong><span>líneas de Java de producción</span></div>
+      <div class="cert-code"><strong>~16.000</strong><span>líneas de pruebas</span></div>
+      <div class="cert-code"><strong>22</strong><span>decisiones documentadas (ADR)</span></div>
+    </div>
+    <div class="cs-actions">
+      <a class="btn btn-primary" href="https://github.com/arquitechthor/kopi-chess" target="_blank" rel="noopener">Ver el código en GitHub →</a>
+      <a class="btn btn-secondary" href="../#kopi-chess">Volver al proyecto</a>
+    </div>
+  </div>
+</header>
+
+<div class="container cs-layout">
+  <details class="cs-toc" open>
+    <summary>Índice de la página</summary>
+    <p>En esta página</p>
+    <ol>
+      <li><a href="#que-es">1. Qué es y por qué estudiarlo</a></li>
+      <li><a href="#hexagonal">2. Arquitectura hexagonal en cinco minutos</a></li>
+      <li><a href="#modulos">3. Un módulo Maven por anillo</a></li>
+      <li><a href="#puertos">4. Puertos, casos de uso y adaptadores</a></li>
+      <li><a href="#recorrido">5. El recorrido de una jugada</a></li>
+      <li><a href="#dominio">6. El dominio: ajedrez en Java puro</a></li>
+      <li><a href="#perft">7. Perft: cómo probar que las reglas son correctas</a></li>
+      <li><a href="#analisis">8. El análisis: de centipeones a veredictos</a></li>
+      <li><a href="#infra">9. Infraestructura con criterio</a></li>
+      <li><a href="#transversal">10. Métricas, idiomas y seguridad sin ensuciar el núcleo</a></li>
+      <li><a href="#en-linea">11. Jugar en línea con un relé que no sabe ajedrez</a></li>
+      <li><a href="#java">12. Java moderno, dónde verlo</a></li>
+      <li><a href="#pruebas">13. Las pruebas como documentación</a></li>
+      <li><a href="#adr">14. Decisiones por escrito: los ADR</a></li>
+      <li><a href="#lecciones">15. Lecciones que deja</a></li>
+      <li><a href="#practica">16. Para practicar</a></li>
+      <li><a href="#profundiza">17. Profundiza</a></li>
+    </ol>
+  </details>
+
+  <article class="cs-doc">
+
+    <section id="que-es">
+      <h2><span class="num">01</span>Qué es y por qué estudiarlo</h2>
+      <p>Kopi Chess se levanta con <code>docker compose up</code> y abre una web local en el puerto 8080.
+        Desde ahí puedes:</p>
+      <ul>
+        <li>Jugar contra <strong>cinco bots</strong>: <code>PAWN</code> y <code>KNIGHT</code> son bots propios
+          (juegan como alguien que empieza), y <code>BISHOP</code>, <code>ROOK</code> y <code>QUEEN</code> usan
+          Stockfish con distinta fuerza.</li>
+        <li>Revisar cada partida terminada: cada jugada recibe un veredicto (teoría, la mejor, buena,
+          imprecisión, error, error grave o mate perdido), y la revisión calcula la apertura, la precisión de cada
+          bando y una gráfica de las posibilidades de ganar.</li>
+        <li>Importar y exportar PGN, ver el historial, usar una API REST y, con una cuenta Kopi opcional, jugar en
+          línea contra un amigo o guardar el historial en la nube.</li>
+      </ul>
+      <p>Lo interesante para aprender no es tanto <em>qué</em> hace como <em>cómo</em> está construido. Tiene
+        justo lo que hace falta para que una arquitectura hexagonal tenga sentido: un <strong>dominio rico</strong>
+        (las reglas del ajedrez y la clasificación de jugadas), que no depende de nada, y <strong>mucha
+        infraestructura variada</strong> alrededor (web, API REST, PostgreSQL, un proceso externo como Stockfish,
+        un relé en AWS, una app Android). Si el núcleo fuera un CRUD, la arquitectura sería ceremonia; aquí cada
+        capa tiene algo que proteger.</p>
+      <div class="callout">
+        <span class="callout-titulo">Cómo leer esta página</span>
+        <p>Cada apartado explica un concepto, muestra el fragmento de código real que lo implementa (con enlace al
+          fichero en GitHub) y termina con la idea que te puedes llevar a tus proyectos. Los fragmentos están
+          recortados para que se lean bien; el código completo está en el repositorio.</p>
+      </div>
+    </section>
+
+    <section id="hexagonal">
+      <h2><span class="num">02</span>Arquitectura hexagonal en cinco minutos</h2>
+      <p>La arquitectura hexagonal (Alistair Cockburn la llamó <em>Ports and Adapters</em>) parte de una idea
+        sencilla: <strong>la lógica de negocio no debe saber cómo se habla con el mundo exterior</strong>. Ni qué
+        base de datos hay, ni si la petición llegó por una web, una API o una prueba.</p>
+      <p>Para conseguirlo se organiza el código en anillos:</p>
+      <ul>
+        <li><strong>Dominio</strong> (el centro): las reglas del negocio. Aquí, el ajedrez.</li>
+        <li><strong>Aplicación</strong>: los <em>casos de uso</em> (una clase por cosa que el usuario puede
+          hacer: jugar una jugada, abandonar, importar un PGN…) y los <em>puertos</em>, que son interfaces.</li>
+        <li><strong>Adaptadores</strong> (fuera): las implementaciones concretas que conectan los puertos con
+          tecnologías reales: Spring MVC, JDBC, el proceso de Stockfish…</li>
+      </ul>
+      <p>Los puertos son de dos tipos:</p>
+      <ul>
+        <li><strong>Puertos de entrada</strong> (o <em>driving</em>): cómo se usa la aplicación. Son las interfaces
+          de los casos de uso, como <code>PlayMoveUseCase</code>. Los llaman los adaptadores de entrada (un
+          controlador web, un endpoint REST).</li>
+        <li><strong>Puertos de salida</strong> (o <em>driven</em>): lo que la aplicación necesita del exterior,
+          como <code>GameRepository</code> (guardar partidas) o <code>BotPlayer</code> (elegir la jugada del bot).
+          Los implementan los adaptadores de salida.</li>
+      </ul>
+      <p>Y la regla que lo sostiene todo, la <strong>regla de dependencias</strong>: <em>las dependencias del
+        código fuente solo apuntan hacia dentro</em>. El dominio no importa nada de la aplicación; la aplicación no
+        importa nada de los adaptadores. Cuando el caso de uso necesita guardar, no llama a JDBC: llama a la
+        interfaz <code>GameRepository</code>, que está <em>dentro</em>, y el adaptador de fuera la implementa. Eso
+        es la <strong>inversión de dependencias</strong> (la D de SOLID).</p>
+
+      <div class="anillos" role="img" aria-label="Diagrama de anillos de Kopi Chess: kopi-bootstrap rodea a los adaptadores, que rodean a kopi-application, que rodea a kopi-domain">
+        <div class="anillo a1">
+          <span class="anillo-nombre">kopi-bootstrap</span>
+          <span class="anillo-desc">Spring Boot: crea los objetos y conecta cada puerto con su adaptador. Nadie depende de él.</span>
+          <div class="anillo a2">
+            <span class="anillo-nombre">kopi-adapter-*</span>
+            <span class="anillo-desc">Un módulo por tecnología. Ninguno conoce a los demás.</span>
+            <div class="anillo-lados">
+              <div class="anillo-lado"><em>Entrada</em><span>web</span><span>rest</span><span>remote</span></div>
+              <div class="anillo a3">
+                <span class="anillo-nombre">kopi-application</span>
+                <span class="anillo-desc">Casos de uso y puertos. Java plano, sin Spring.</span>
+                <div class="anillo a4">
+                  <span class="anillo-nombre">kopi-domain</span>
+                  <span class="anillo-desc">chess · game · analysis. Cero dependencias.</span>
+                </div>
+              </div>
+              <div class="anillo-lado"><em>Salida</em><span>persistence</span><span>stockfish</span><span>bots</span><span>openings</span><span>relay</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="mas">La teoría completa, con un ejemplo mínimo y preguntas para evaluarte, en la ficha de
+        <a href="https://arquitechthor.github.io/arquitechthor-spider/temas/hexagonal-architecture.html">arquitectura hexagonal de Tech Spider</a>.</p>
+
+      <div class="callout leccion">
+        <span class="callout-titulo">La idea clave</span>
+        <p>Hexagonal no va de hexágonos ni de carpetas con nombres bonitos. Va de <strong>hacia dónde apuntan los
+          <code>import</code></strong>. Si el dominio puede compilar sin Spring, sin JDBC y sin la web, la arquitectura
+          funciona. Si no puede, da igual cómo se llamen los paquetes.</p>
+      </div>
+    </section>
+
+    <section id="modulos">
+      <h2><span class="num">03</span>Un módulo Maven por anillo</h2>
+      <p>Muchos proyectos «hexagonales» separan los anillos con paquetes dentro de un único módulo. El problema es
+        que un paquete no impide nada: el día que alguien importa una clase de JDBC desde el dominio, compila igual.
+        Con el tiempo esas dependencias aparecen y la arquitectura deja de enseñar lo que pretendía.</p>
+      <p>Kopi Chess (<a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/001-arquitectura-hexagonal-modulos-maven.md" target="_blank" rel="noopener">ADR-001</a>)
+        usa un <strong>proyecto Maven multimódulo</strong>, con un módulo por anillo. Como <code>kopi-domain</code> no
+        declara ninguna dependencia, <strong>un import hacia fuera ni siquiera compila</strong>:</p>
+      <div class="tarjetas">
+        <div class="tarjeta"><span class="etiqueta nucleo">Núcleo</span><h4>kopi-domain</h4><p>Las reglas del ajedrez, la partida y el análisis. Java puro: ni una dependencia de compilación.</p></div>
+        <div class="tarjeta"><span class="etiqueta nucleo">Núcleo</span><h4>kopi-application</h4><p>Casos de uso y puertos. Solo depende de <code>kopi-domain</code>.</p></div>
+        <div class="tarjeta"><span class="etiqueta entrada">Entrada</span><h4>kopi-adapter-web · rest · remote</h4><p>Páginas Thymeleaf, la API JSON <code>/api/v1</code> y las peticiones de la app Android en «modo servidor».</p></div>
+        <div class="tarjeta"><span class="etiqueta salida">Salida</span><h4>kopi-adapter-persistence</h4><p>PostgreSQL con SQL escrito a mano (<code>JdbcClient</code>) y migraciones Flyway. También la cola de análisis.</p></div>
+        <div class="tarjeta"><span class="etiqueta salida">Salida</span><h4>kopi-adapter-stockfish · bots · openings</h4><p>Stockfish por el protocolo UCI, los bots propios de los niveles bajos y el libro de aperturas de Lichess en memoria.</p></div>
+        <div class="tarjeta"><span class="etiqueta salida">Salida</span><h4>kopi-adapter-relay</h4><p>La cuenta Kopi (Cognito) y el relé de partidas en línea en AWS.</p></div>
+        <div class="tarjeta"><h4>kopi-bootstrap</h4><p>La aplicación Spring Boot. El único módulo que lo conoce todo.</p></div>
+        <div class="tarjeta"><h4>kopi-architecture-tests · kopi-labs</h4><p>Las reglas de ArchUnit y un laboratorio aislado de funciones <em>preview</em> de Java.</p></div>
+      </div>
+
+      <h3>Un detalle fino: el BOM de Spring sin heredar de Spring</h3>
+      <p>Lo habitual en Spring Boot es que el POM padre sea <code>spring-boot-starter-parent</code>. Kopi Chess no lo
+        hace: <strong>importa el BOM</strong> de Spring Boot en <code>dependencyManagement</code>. Así las versiones de
+        Spring están gestionadas en un solo sitio, pero el módulo del dominio no hereda ni un plugin ni una propiedad
+        de Spring. Es un detalle pequeño que dice mucho: el dominio no sabe que Spring existe.</p>
+
+      <h3>Lo que Maven no ve, lo vigila ArchUnit</h3>
+      <p>Los módulos no lo cubren todo. <code>java.sql</code> forma parte del JDK, así que el dominio podría usarlo sin
+        declarar nada; un adaptador podría depender de otro adaptador; alguien podría colocar un paquete en el módulo
+        equivocado. Para eso está <code>kopi-architecture-tests</code>, con cinco reglas que se leen como frases y que
+        <strong>rompen la build</strong> si se incumplen:</p>
+      <figure class="code">
+        <figcaption><span>HexagonalArchitectureTest.java</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-architecture-tests/src/test/java/com/arquitechthor/kopi/architecture/HexagonalArchitectureTest.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">@ArchTest
+static final ArchRule domainDependsOnNothingOutsideItself = noClasses()
+        .that().resideInAPackage(DOMAIN)
+        .should().dependOnClassesThat().resideInAnyPackage(
+                APPLICATION, ADAPTERS, BOOTSTRAP,
+                "org.springframework..", "jakarta..", "io.micrometer..", "java.sql..", "javax.sql..")
+        .because("the domain is the innermost ring and must stay plain Java");
+
+@ArchTest
+static final ArchRule applicationDependsOnlyOnTheDomain = noClasses()
+        .that().resideInAPackage(APPLICATION)
+        .should().dependOnClassesThat().resideInAnyPackage(
+                ADAPTERS, BOOTSTRAP,
+                "org.springframework..", "jakarta..", "io.micrometer..", "java.sql..", "javax.sql..")
+        .because("use cases must not depend on adapters or on Spring (ADR-002)");
+
+@ArchTest
+static final ArchRule adaptersDoNotKnowEachOther = slices()
+        .matching(ROOT + ".adapter.(*)..")
+        .should().notDependOnEachOther()
+        .because("each adapter talks only to the application ring");</code></pre>
+      </figure>
+      <p>Fíjate en <code>io.micrometer..</code>: ni siquiera la librería de métricas puede entrar en el núcleo. Más
+        adelante verás cómo se mide sin ella (<a href="#transversal">apartado 10</a>).</p>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Una regla de arquitectura que no se comprueba automáticamente es una sugerencia. Convierte las reglas en
+          <strong>errores de compilación</strong> (módulos) o en <strong>pruebas que fallan</strong> (ArchUnit) y
+          dejarán de depender de la disciplina de cada persona.</p>
+      </div>
+    </section>
+
+    <section id="puertos">
+      <h2><span class="num">04</span>Puertos, casos de uso y adaptadores</h2>
+      <h3>Un puerto es una interfaz con lenguaje del negocio</h3>
+      <p>Este es el puerto de salida que elige la jugada del bot. No habla de procesos, ni de UCI, ni de tiempos: habla
+        de posiciones y de perfiles de bot.</p>
+      <figure class="code">
+        <figcaption><span>application/port/BotPlayer.java</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-application/src/main/java/com/arquitechthor/kopi/application/port/BotPlayer.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// Chooses the bot's move. Implemented by the bots adapter (`PAWN`,
+/// `KNIGHT`) and, from phase 4, by the Stockfish adapter.
+///
+/// A different port from the engine used for analysis (design §4.3): the
+/// weakest bot needs no engine, and analysis needs no personality.
+public interface BotPlayer {
+
+    /// One of the legal moves of `position`, which has at least one, as
+    /// `profile` would play it.
+    ///
+    /// @throws BotUnavailableException if the bot cannot answer (engine down,
+    ///                                 time out)
+    Move chooseMove(Position position, BotProfile profile);
+}</code></pre>
+      </figure>
+      <p>Observa el comentario: <strong>hay dos puertos distintos</strong> para algo que parece lo mismo («pedirle cosas
+        a Stockfish»). <code>BotPlayer</code> elige una jugada con personalidad; <code>ChessEngine</code> analiza una
+        posición con la máxima fuerza. Que hoy los implemente el mismo programa es un detalle de los adaptadores; para la
+        aplicación son necesidades diferentes. Diseñar los puertos <em>desde lo que necesita el caso de uso</em>, y no
+        desde la tecnología que hay detrás, es la parte más difícil y más valiosa de la arquitectura.</p>
+
+      <h3>Un caso de uso es una clase normal</h3>
+      <p>En muchos proyectos con Spring los servicios llevan <code>@Service</code> y <code>@Transactional</code>. Es
+        cómodo, pero ata el núcleo al <em>framework</em>: el caso de uso ya no se puede crear ni probar sin Spring. Kopi
+        Chess decide lo contrario (<a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/002-casos-de-uso-sin-spring.md" target="_blank" rel="noopener">ADR-002</a>):
+        <strong>los casos de uso son clases Java planas</strong> que reciben sus puertos por el constructor.</p>
+      <figure class="code">
+        <figcaption><span>application/game/PlayMove.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-application/src/main/java/com/arquitechthor/kopi/application/game/PlayMove.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// Load, check the version, play the move of the person at this computer,
+/// let the bot reply if the game goes on, save once. If that finished the
+/// game, its analysis is queued.
+///
+/// Saving once at the end means a failure anywhere (an illegal move, the
+/// bot being unavailable, someone else saving first) leaves the stored game
+/// exactly as it was.
+public final class PlayMove implements PlayMoveUseCase {
+
+    private final GameRepository repository;
+    private final BotPlayer bot;
+    private final AnalysisJobQueue analyses;
+    private final Clock clock;
+
+    @Override
+    public GameView play(PlayMoveCommand command) {
+        var loaded = Games.loadAtVersion(repository, command.gameId(), command.expectedVersion());
+        var game = loaded.play(command.uci(), Games.localColor(loaded), clock.instant());
+        game = BotTurn.playIfBotToMove(game, bot, clock);
+        repository.update(game, loaded.version());
+        AnalysisOnFinish.request(analyses, game, clock.instant());
+        return GameView.of(game);
+    }
+}</code></pre>
+      </figure>
+      <p>Cinco líneas cuentan todo el caso de uso. Y hay tres decisiones escondidas en ellas que merece la pena
+        destacar:</p>
+      <ul>
+        <li><strong><code>Clock</code> es una dependencia más.</strong> Nadie llama a <code>Instant.now()</code>: el
+          reloj llega por el constructor, así que las pruebas deciden qué hora es.</li>
+        <li><strong><code>Game</code> es inmutable.</strong> <code>loaded.play(...)</code> no modifica la partida:
+          devuelve otra. Si el bot falla a mitad, <code>loaded</code> sigue intacta.</li>
+        <li><strong>Se guarda una sola vez, al final.</strong> Cualquier error antes de esa línea deja la base de datos
+          exactamente como estaba, sin necesidad de deshacer nada.</li>
+      </ul>
+
+      <h3>El cableado: el único sitio que lo conoce todo</h3>
+      <p>Si los casos de uso no llevan anotaciones, alguien tiene que crearlos. Ese alguien es
+        <code>UseCaseConfiguration</code>, en <code>kopi-bootstrap</code>. Es, literalmente, <strong>el mejor resumen de
+        qué usa qué</strong>: cada <code>@Bean</code> es un caso de uso recibiendo sus adaptadores.</p>
+      <figure class="code">
+        <figcaption><span>bootstrap/UseCaseConfiguration.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-bootstrap/src/main/java/com/arquitechthor/kopi/bootstrap/UseCaseConfiguration.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// One port, two adapters (ADR-006): Kopi's own bots for `PAWN` and
+/// `KNIGHT`, Stockfish for the rest, every move timed (design §14).
+@Bean
+@Primary
+BotPlayer botPlayer(StockfishBots stockfish, MeterRegistry registry) {
+    var own = new KopiBots();
+    BotPlayer bots = (position, profile) -&gt; switch (profile) {
+        case PAWN, KNIGHT -&gt; own.chooseMove(position, profile);
+        case BISHOP, ROOK, QUEEN -&gt; stockfish.chooseMove(position, profile);
+    };
+    return new TimedBotPlayer(bots, registry);
+}
+
+@Bean
+PlayMoveUseCase playMove(GameRepository games, BotPlayer bot, AnalysisJobQueue analyses,
+        Clock clock, OnlineGames online) {
+    return new PlayMove(games, bot, analyses, clock, online);
+}</code></pre>
+      </figure>
+      <p>Aquí se ven tres patrones a la vez: un <strong>puerto implementado con una lambda</strong> (es una interfaz
+        funcional), un <strong>enrutador</strong> que reparte entre dos adaptadores con un <code>switch</code> exhaustivo
+        sobre el <code>enum</code> (si mañana hay un sexto bot, no compila hasta que se decida quién lo juega) y un
+        <strong>decorador</strong> (<code>TimedBotPlayer</code>) que añade métricas sin que nadie más se entere.</p>
+      <div class="callout ojo">
+        <span class="callout-titulo">El precio</span>
+        <p>Hay más código de configuración que con <code>@Service</code> y escaneo de componentes, y algo de
+          <em>mapping</em> entre el dominio y cada adaptador. Los ADR lo asumen a propósito: hacer visible la frontera
+          es parte de lo que se quiere enseñar.</p>
+      </div>
+    </section>
+
+    <section id="recorrido">
+      <h2><span class="num">05</span>El recorrido de una jugada</h2>
+      <p>Para ver los anillos trabajando juntos, sigue una jugada desde que sueltas la pieza en el navegador hasta que
+        aparece la respuesta del bot:</p>
+      <ol class="pasos">
+        <li><strong>Navegador</strong>: <code>board.js</code> (Chessground) envía la jugada en notación UCI, por ejemplo
+          <code>e2e4</code>, junto con la versión de la partida que tiene la página.</li>
+        <li><strong>Adaptador web</strong>: <code>GameController.playLive</code> traduce la petición HTTP a un comando
+          <code>PlayMoveCommand</code> y llama al puerto de entrada <code>PlayMoveUseCase</code>.</li>
+        <li><strong>Aplicación</strong>: <code>PlayMove</code> carga la partida con <code>GameRepository</code> y
+          comprueba que la versión coincide.</li>
+        <li><strong>Dominio</strong>: <code>Game.play</code> comprueba el turno, busca el texto <code>e2e4</code>
+          <em>entre las jugadas legales</em> y devuelve una partida nueva.</li>
+        <li><strong>Aplicación → puerto de salida</strong>: si le toca al bot, <code>BotPlayer.chooseMove</code>.</li>
+        <li><strong>Adaptador de salida</strong>: el enrutador decide: <code>KopiBots</code> (Java puro) o
+          <code>StockfishBots</code> (proceso externo por UCI). <code>TimedBotPlayer</code> mide cuánto tarda.</li>
+        <li><strong>Dominio</strong>: <code>Game.play</code> otra vez, con la jugada del bot.</li>
+        <li><strong>Persistencia</strong>: <code>GameRepository.update</code> → <code>JdbcGameRepository</code> guarda
+          la partida y sus jugadas nuevas en una transacción corta.</li>
+        <li><strong>De vuelta</strong>: la página recibe solo el trozo de HTML que cambia y anima la jugada del bot.</li>
+      </ol>
+      <p>Si la partida terminó con esa jugada, <code>AnalysisOnFinish</code> encola su análisis: un segundo recorrido,
+        en segundo plano, que verás en el <a href="#infra">apartado 9</a>.</p>
+    </section>
+
+    <section id="dominio">
+      <h2><span class="num">06</span>El dominio: ajedrez en Java puro</h2>
+      <p>Había una opción fácil: usar una librería de ajedrez. Kopi Chess la descarta
+        (<a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/004-reglas-propias-perft.md" target="_blank" rel="noopener">ADR-004</a>)
+        con un argumento de arquitectura: si las reglas vinieran de fuera, <code>kopi-domain</code> quedaría casi vacío,
+        un envoltorio sobre código ajeno, sin nada que enseñar. Las reglas del ajedrez, en cambio, son un dominio ideal:
+        finito, bien especificado y <strong>verificable al 100 %</strong>.</p>
+
+      <h3>Tipos que se leen como el problema</h3>
+      <p>Los ladrillos son casi todos <em>records</em> y <em>enums</em>:</p>
+      <ul>
+        <li><code>Square</code>: un <em>record</em> con un índice de 0 (<code>a1</code>) a 63 (<code>h8</code>).</li>
+        <li><code>Piece</code>: un <em>record</em> <code>(Color, PieceType)</code>, en lugar de un <code>enum</code> de
+          12 constantes. Se lee mejor y permite <em>record patterns</em>.</li>
+        <li><code>Move</code>: origen, destino y un <code>MoveKind</code>.</li>
+      </ul>
+      <p>Y <code>MoveKind</code> es el ejemplo de manual de una <strong><em>sealed interface</em></strong>:</p>
+      <figure class="code">
+        <figcaption><span>domain/chess/MoveKind.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-domain/src/main/java/com/arquitechthor/kopi/domain/chess/MoveKind.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// A **sealed interface**: these six records are the only possible kinds,
+/// and the compiler knows it. A `switch` over a `MoveKind` that forgets one
+/// does not compile.
+public sealed interface MoveKind {
+    record Quiet() implements MoveKind {}
+    record Capture() implements MoveKind {}
+    record DoublePawnPush() implements MoveKind {}
+    record EnPassant() implements MoveKind {}
+    record Castling(CastleSide side) implements MoveKind {}
+    record Promotion(PieceType piece, boolean capture) implements MoveKind {}
+
+    default boolean isCapture() {
+        // Exhaustive pattern matching, with record deconstruction and
+        // unnamed patterns (`_`) for what we don't need.
+        return switch (this) {
+            case Capture _, EnPassant _ -&gt; true;
+            case Promotion(_, var capture) -&gt; capture;
+            case Quiet _, DoublePawnPush _, Castling _ -&gt; false;
+        };
+    }
+}</code></pre>
+      </figure>
+      <p>Cada tipo de jugada transporta solo los datos que necesita: el enroque sabe hacia qué lado, la promoción sabe en
+        qué pieza se convierte y si capturó. No hay campos «a veces nulos» ni banderas que solo tienen sentido en ciertos
+        casos. Y el <code>switch</code> no tiene <code>default</code>: es exhaustivo, así que si algún día existe un
+        séptimo tipo, el compilador señala cada sitio que hay que actualizar.</p>
+
+      <h3>Aplicar una jugada: un <code>switch</code> que no puede olvidarse de nada</h3>
+      <figure class="code">
+        <figcaption><span>domain/chess/Position.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-domain/src/main/java/com/arquitechthor/kopi/domain/chess/Position.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">public Position apply(Move move) {
+    var lifted = board.withoutPiece(from);
+
+    // Exhaustive over the sealed `MoveKind`: a seventh kind of move
+    // would not compile until it is handled here.
+    var nextBoard = switch (move.kind()) {
+        case MoveKind.Quiet _, MoveKind.Capture _, MoveKind.DoublePawnPush _ -&gt; lifted.withPiece(to, mover);
+        case MoveKind.EnPassant _ -&gt;
+            // The captured pawn stands beside the mover, on its rank,
+            // not on the destination square.
+            lifted.withoutPiece(Square.of(to.file(), from.rank())).withPiece(to, mover);
+        case MoveKind.Promotion(var piece, _) -&gt; lifted.withPiece(to, new Piece(sideToMove, piece));
+        case MoveKind.Castling(var side) -&gt; {
+            var rookFrom = Square.of(side == CastleSide.KINGSIDE ? 7 : 0, rank);
+            var rookTo = Square.of(side == CastleSide.KINGSIDE ? 5 : 3, rank);
+            yield lifted.withoutPiece(rookFrom).withPiece(rookTo, rook).withPiece(to, mover);
+        }
+    };
+    // ... castling rights, en passant target, clocks ...
+    return new Position(nextBoard, sideToMove.opposite(), nextRights, nextEnPassantTarget,
+            nextHalfmoveClock, nextFullmoveNumber);
+}</code></pre>
+      </figure>
+      <p><code>Position</code> es <strong>inmutable</strong>: <code>apply</code> devuelve una posición nueva. Los
+        programas de ajedrez rápidos suelen hacer lo contrario (<em>make/unmake</em>: modificar el tablero y deshacerlo),
+        que es más rápido pero es una fuente clásica de errores sutiles. Copiar 128 casillas es barato, y la inmutabilidad
+        elimina esa familia de errores de golpe.</p>
+
+      <h3>El tablero 0x88: un truco de bits detrás de una API limpia</h3>
+      <p>Por dentro, <code>Board</code> no es un array de 64 casillas, sino de <strong>128</strong>: 16 por fila, de las
+        que solo las 8 primeras son reales. La celda de una casilla es <code>fila * 16 + columna</code>. ¿Para qué la
+        mitad desperdiciada? Para esto:</p>
+      <figure class="code">
+        <figcaption><span>domain/chess/Board.java (comentario de la clase)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-domain/src/main/java/com/arquitechthor/kopi/domain/chess/Board.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="txt">rank 8 | 112 ... 119 | 120 ... 127   &lt;- right half: off the board
+...
+rank 1 |   0 ...   7 |   8 ...  15
+         a  ...  h
+
+The trick: a cell is on the board if and only if (cell &amp; 0x88) == 0.
+Walking off any edge (left, right, top or bottom) sets one of those bits.</code></pre>
+      </figure>
+      <p>El generador de jugadas puede dar un paso en cualquier dirección (un caballo suma 33, 31, 18…) y comprobar si se
+        ha salido del tablero con <strong>una sola operación</strong>, sin casos especiales para los bordes ni para dar la
+        vuelta de la columna h a la a. Lo importante para la arquitectura: <strong>nada de esto se ve desde fuera</strong>.
+        La API pública habla de <code>Square</code>; si algún día hace falta velocidad, se puede cambiar a
+        <em>bitboards</em> sin tocar a nadie, con <em>perft</em> como red de seguridad.</p>
+
+      <h3>Del texto a una jugada, nunca al revés</h3>
+      <p>Otra regla del dominio que evita muchos errores: <strong>las jugadas las produce el generador</strong>. Un texto
+        externo como <code>e2e4</code> nunca se convierte en <code>Move</code> por sí solo: se busca entre las jugadas
+        legales de la posición. Si no está, es ilegal. Así es imposible construir una jugada que el dominio no haya
+        validado.</p>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Modela el dominio con tipos que hagan <strong>imposibles los estados imposibles</strong>: <em>sealed</em> para
+          las alternativas cerradas, <em>records</em> inmutables para los valores y constructores que validan. Cada error
+          que el compilador detecta es una prueba que no tienes que escribir.</p>
+      </div>
+    </section>
+
+    <section id="perft">
+      <h2><span class="num">07</span>Perft: cómo probar que las reglas son correctas</h2>
+      <p>¿Cómo sabes que tu generador de jugadas no se olvida de una captura al paso en un caso raro? Con
+        <strong><em>perft</em></strong> (<em>performance test</em>): contar todas las posiciones alcanzables a una
+        profundidad dada. Para ciertas posiciones famosas esos números están publicados, y una sola regla mal implementada
+        los cambia.</p>
+      <figure class="code">
+        <figcaption><span>domain/chess/Perft.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-domain/src/main/java/com/arquitechthor/kopi/domain/chess/Perft.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">public static long count(Position position, int depth) {
+    if (depth == 0) {
+        return 1;
+    }
+    var moves = position.legalMoves();
+    if (depth == 1) {
+        // "Bulk counting": the leaves are the legal moves themselves,
+        // so there is no need to apply each one.
+        return moves.size();
+    }
+    long nodes = 0;
+    for (var move : moves) {
+        nodes += count(position.apply(move), depth - 1);
+    }
+    return nodes;
+}</code></pre>
+      </figure>
+      <p>La prueba compara con las cifras de la Chess Programming Wiki. Desde la posición inicial: 20 posiciones a
+        profundidad 1, 400 a profundidad 2, 8.902 a 3, 197.281 a 4 y 4.865.609 a 5. La posición «Kiwipete», diseñada para
+        provocar enroques, clavadas, capturas al paso y promociones a la vez, da 48, 2.039, 97.862 y 4.085.603.</p>
+      <figure class="code">
+        <figcaption><span>PerftTest.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-domain/src/test/java/com/arquitechthor/kopi/domain/chess/PerftTest.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">@ParameterizedTest(name = "{0} at depth {2}: {3} nodes")
+@CsvSource(delimiter = ';', textBlock = """
+        initial;  rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1;  4;  197 281
+        kiwipete; r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1; 3; 97 862
+        """)
+void countsTheReferenceNodes(String name, String fen, int depth, String expected) {
+    assertThat(Perft.count(Fen.parse(fen), depth)).isEqualTo(nodes(expected));
+}</code></pre>
+      </figure>
+      <p>Tres ideas prácticas alrededor de <em>perft</em>:</p>
+      <ul>
+        <li><strong><code>Perft.divide</code></strong> reparte la cuenta por jugada inicial con el mismo formato que
+          <code>go perft</code> de Stockfish (<code>e2e4: 20</code>). Cuando un número falla, comparas las dos salidas línea
+          a línea y bajas por la rama equivocada hasta encontrar el error.</li>
+        <li><strong>Las pruebas lentas llevan <code>@Tag("slow")</code></strong>: las profundidades grandes (unos 15
+          segundos) se ejecutan en la integración continua, pero no en cada build local.</li>
+        <li><strong>Prueba diferencial</strong>: <code>DifferentialTest</code> juega miles de partidas aleatorias y compara,
+          en cada posición, el conjunto exacto de jugadas legales, el jaque y el FEN resultante con los de Stockfish. Una
+          implementación de referencia usada <em>solo en pruebas</em>, nunca como dependencia de producción.</li>
+      </ul>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Antes de escribir algo complejo, busca su <strong>oráculo</strong>: un número conocido, una implementación de
+          referencia, una propiedad que siempre se cumple. Con una meta objetiva, «está terminado» deja de ser una
+          opinión.</p>
+      </div>
+    </section>
+
+    <section id="analisis">
+      <h2><span class="num">08</span>El análisis: de centipeones a veredictos</h2>
+      <p>Stockfish evalúa posiciones en <strong>centipeones</strong> (100 = un peón de ventaja para las blancas). La
+        tentación es juzgar una jugada por cuántos centipeones pierde. Pero eso engaña: perder dos peones con la partida
+        igualada la cambia por completo, y perderlos ganando por nueve peones no cambia nada.</p>
+      <p>La solución (<a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/005-clasificacion-basada-en-win-percent.md" target="_blank" rel="noopener">ADR-005</a>)
+        es juzgar por la <strong>probabilidad de ganar</strong>, con la curva que publica Lichess, ajustada sobre sus
+        propias partidas:</p>
+      <figure class="code">
+        <figcaption><span>domain/analysis/WinChance.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-domain/src/main/java/com/arquitechthor/kopi/domain/analysis/WinChance.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">public static WinChance of(Evaluation evaluation, Color side) {
+    double forWhite = switch (evaluation) {
+        case Evaluation.Centipawns(var cp) -&gt; {
+            int capped = Math.clamp(cp, -CENTIPAWN_CAP, CENTIPAWN_CAP);
+            yield 2 / (1 + Math.exp(-SLOPE * capped)) - 1;     // SLOPE = 0.00368208
+        }
+        case Evaluation.MateIn(var moves) -&gt; moves &gt; 0 ? 1 : -1;
+        case Evaluation.Checkmate(var winner) -&gt; winner == Color.WHITE ? 1 : -1;
+    };
+    return new WinChance(side == Color.WHITE ? forWhite : -forWhite);
+}</code></pre>
+      </figure>
+      <p>Con la curva, la pérdida de una jugada es la diferencia de probabilidad antes y después. Los umbrales también son
+        los de Lichess: menos de 0,1 es buena, menos de 0,2 una imprecisión, menos de 0,3 un error y a partir de ahí un
+        error grave. Además hay <code>BOOK</code> (aún en el libro de aperturas), <code>BEST</code> y
+        <code>MISSED_MATE</code> (había mate en cinco o menos y ya no hay ninguno). Una jugada forzada nunca es un
+        error.</p>
+
+      <h3>Un caso límite convertido en tipo</h3>
+      <p>Mira <code>Evaluation</code>: tiene un tercer caso, <code>Checkmate</code>, además de centipeones y mate en N. ¿Por
+        qué no usar <code>MateIn(0)</code>? Porque Stockfish da <code>mate 0</code> desde el punto de vista del bando que
+        mueve y, al pasarlo al punto de vista de las blancas, <strong>el cero no tiene signo</strong>: se pierde quién
+        ganó. En lugar de un comentario de advertencia, el dominio hace imposible el error:</p>
+      <figure class="code">
+        <figcaption><span>domain/analysis/Evaluation.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-domain/src/main/java/com/arquitechthor/kopi/domain/analysis/Evaluation.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">public sealed interface Evaluation {
+    record Centipawns(int value) implements Evaluation {}
+
+    record MateIn(int moves) implements Evaluation {
+        public MateIn {
+            if (moves == 0) {
+                throw new IllegalArgumentException("A mate in 0 is a Checkmate: say who won");
+            }
+        }
+    }
+
+    record Checkmate(Color winner) implements Evaluation {}
+}</code></pre>
+      </figure>
+
+      <h3>La precisión, con <em>stream gatherers</em></h3>
+      <p>La precisión de cada bando también sigue la fórmula de Lichess: una precisión por jugada a partir de la pérdida, y
+        una media de la partida que combina una media armónica con otra ponderada por la volatilidad (la desviación típica
+        de la probabilidad en ventanas de posiciones). Para recorrer «cada jugada como paso de una posición a la
+        siguiente» el código usa <code>Gatherers.windowSliding</code>, de Java 24:</p>
+      <figure class="code">
+        <figcaption><span>domain/analysis/AnalysisSummary.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-domain/src/main/java/com/arquitechthor/kopi/domain/analysis/AnalysisSummary.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">// Each move is the step from one position to the next.
+var steps = positions.stream().gather(Gatherers.windowSliding(2)).toList();</code></pre>
+      </figure>
+      <p>Todo esto vive en el dominio, sin motor: entra una lista de evaluaciones y sale la clasificación. Por eso se
+        prueba en milisegundos con posiciones reales escritas en FEN.</p>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Cuando haya un estándar reconocido (aquí, las fórmulas de Lichess), úsalo y enlázalo. Inventar umbrales
+          propios lleva a discusiones sin fin y a números que nadie reconoce.</p>
+      </div>
+    </section>
+
+    <section id="infra">
+      <h2><span class="num">09</span>Infraestructura con criterio</h2>
+
+      <h3>Una cola de trabajos dentro de PostgreSQL</h3>
+      <p>Analizar una partida lleva del orden de un minuto: no cabe en la petición que la termina. Hace falta trabajo
+        <strong>asíncrono y duradero</strong>: si la aplicación se para a mitad, el análisis no se puede perder ni quedarse
+        «en curso» para siempre. Lo habitual sería un <em>broker</em> (RabbitMQ, Kafka, Redis)… pero Kopi Chess ya tiene
+        PostgreSQL, y una pieza más es mucho para un trabajo por partida
+        (<a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/007-cola-de-analisis-en-postgresql.md" target="_blank" rel="noopener">ADR-007</a>).</p>
+      <p>La cola es una tabla, <code>analysis_job</code>, y el corazón es la consulta que <strong>reclama</strong> el
+        siguiente trabajo:</p>
+      <figure class="code">
+        <figcaption><span>JdbcAnalysisJobQueue.java (SQL recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-adapter-persistence/src/main/java/com/arquitechthor/kopi/adapter/persistence/JdbcAnalysisJobQueue.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="sql">update analysis_job
+   set state = 'RUNNING', locked_at = :now, attempts = attempts + 1
+ where id = (select id from analysis_job
+              where state = 'QUEUED'
+              order by created_at, id
+              for update skip locked
+              limit 1)
+returning id, game_id, state, attempts, last_error, created_at</code></pre>
+      </figure>
+      <p><code>FOR UPDATE SKIP LOCKED</code> es la clave: el <code>select</code> interior bloquea la fila elegida y
+        <strong>se salta las que otra transacción ya tiene bloqueadas</strong>. Dos <em>workers</em> reclamando a la vez se
+        llevan trabajos distintos, y ninguno espera al otro. Todo en una única sentencia atómica.</p>
+      <p>Alrededor, tres detalles que convierten una tabla en una cola fiable:</p>
+      <ul>
+        <li><strong>Encolar es idempotente</strong>: <code>insert … on conflict (game_id) do update</code>. Pedir otra vez
+          el análisis de una partida en cola, en curso o hecha no cambia nada; una fallida vuelve a empezar.</li>
+        <li><strong>Recuperación al arrancar</strong>: los trabajos que quedaron <code>RUNNING</code> perdieron su
+          <em>worker</em>; vuelven a la cola o, si agotaron los intentos, pasan a <code>FAILED</code> con el motivo.</li>
+        <li><strong>El tiempo lo pasa quien llama</strong>, desde su <code>Clock</code>, en vez de usar <code>now()</code>
+          de la base de datos: las pruebas deciden qué es «ahora» y qué es «antiguo».</li>
+      </ul>
+
+      <h3>Hilos virtuales para los <em>workers</em></h3>
+      <p>Quien vacía la cola es <code>AnalysisWorker</code>: unos pocos <strong>hilos virtuales</strong> que reclaman el
+        siguiente trabajo una y otra vez y descansan cuando no hay ninguno. Se arranca y se para con el ciclo de vida de
+        Spring (<code>SmartLifecycle</code>), y un trabajo cortado a medias se recupera en el siguiente arranque.</p>
+      <figure class="code">
+        <figcaption><span>bootstrap/AnalysisWorker.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-bootstrap/src/main/java/com/arquitechthor/kopi/bootstrap/AnalysisWorker.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">var recovered = queue.recoverStale(clock.instant(), properties.maxAttempts());
+running = true;
+for (int i = 1; i &lt;= properties.workers(); i++) {
+    threads.add(Thread.ofVirtual().name("analysis-worker-" + i).start(this::work));
+}</code></pre>
+      </figure>
+      <p>Fíjate en dónde vive: en <code>kopi-bootstrap</code>, no en la aplicación. El caso de uso
+        (<code>RunAnalysisJob</code>) solo sabe «toma el siguiente trabajo y analízalo»; cuántos hilos, cada cuánto y con
+        qué ciclo de vida es un asunto de infraestructura.</p>
+
+      <h3>Sin transacción alrededor del caso de uso</h3>
+      <p>El plan inicial era envolver cada caso de uso en una transacción. Al implementarlo apareció el problema
+        (<a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/014-sin-transaccion-en-los-casos-de-uso.md" target="_blank" rel="noopener">ADR-014</a>):
+        <code>PlayMove</code> espera la jugada del bot, y los bots fuertes piensan con Stockfish durante segundos. Una
+        transacción abierta todo ese tiempo retendría una conexión del <em>pool</em> por cada partida en juego.</p>
+      <p>Y no hacía falta. La coherencia la dan tres piezas más baratas:</p>
+      <ul>
+        <li><strong>Bloqueo optimista</strong>: la partida tiene una versión, y el guardado solo funciona si nadie la ha
+          cambiado desde que se cargó.</li>
+        <li>Cada caso de uso <strong>guarda una sola vez</strong>, al final.</li>
+        <li>El repositorio hace atómico <strong>cada guardado</strong> (la fila de la partida y sus jugadas nuevas, en una
+          transacción corta).</li>
+      </ul>
+      <figure class="code">
+        <figcaption><span>JdbcGameRepository.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-adapter-persistence/src/main/java/com/arquitechthor/kopi/adapter/persistence/JdbcGameRepository.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">transactions.executeWithoutResult(_ -&gt; {
+    var updated = jdbc.sql("""
+            update game
+               set status = :status, result = :result, termination = :termination,
+                   version = :version, finished_at = :finishedAt
+             where id = :id and version = :loadedVersion""")
+            // ... params ...
+            .update();
+    if (updated == 0) {
+        throw new ConcurrentGameUpdateException(game.id(), loadedVersion);
+    }
+    insertMoves(row.id(), GameRows.moveRows(game));
+});</code></pre>
+      </figure>
+      <p>Si otra pestaña guardó antes, <code>updated</code> es 0, no se guarda nada y la API responde
+        <code>412 Precondition Failed</code> (la versión viaja en la cabecera <code>If-Match</code>, como dicta HTTP). La
+        única clase con código de transacciones de todo el proyecto es el adaptador de persistencia.</p>
+
+      <h3>Stockfish: un proceso externo tratado con cuidado</h3>
+      <p>Stockfish no es una librería: es un programa que se arranca y con el que se habla por la entrada y la salida
+        estándar con el protocolo UCI. <code>EnginePool</code> lo hace robusto con tres propiedades:</p>
+      <ul>
+        <li><strong>Perezoso</strong>: un motor se arranca la primera vez que hace falta, así que la aplicación arranca (y
+          los bots débiles juegan) aunque Stockfish no esté.</li>
+        <li><strong>Se cura solo</strong>: un motor que falla mientras está prestado se cierra y se sustituye en el
+          siguiente préstamo. Cada sustitución se cuenta y se publica como métrica.</li>
+        <li><strong>Espera acotada</strong>: un <code>Semaphore</code> limita los motores, y nadie espera más de un tiempo
+          máximo por uno libre.</li>
+      </ul>
+      <p>Es genérico (<code>EnginePool&lt;E extends AutoCloseable&gt;</code>): en producción presta <code>UciEngine</code>,
+        y en las pruebas, un motor falso.</p>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Antes de añadir una pieza de infraestructura, mira si la que ya tienes resuelve el problema a tu escala.
+          PostgreSQL con <code>SKIP LOCKED</code> es una cola excelente para un volumen moderado, y con
+          <code>LISTEN/NOTIFY</code> podría incluso evitar el sondeo. Y <strong>no metas transacciones largas alrededor de
+          esperas externas</strong>: el bloqueo optimista suele ser suficiente.</p>
+      </div>
+    </section>
+
+    <section id="transversal">
+      <h2><span class="num">10</span>Métricas, idiomas y seguridad sin ensuciar el núcleo</h2>
+      <p>Las preocupaciones transversales (medir, traducir, proteger) son las que más fácilmente se cuelan en el núcleo.
+        Kopi Chess tiene una respuesta para cada una.</p>
+
+      <h3>Métricas con decoradores de puertos</h3>
+      <p>Lo natural sería poner un <code>Timer</code> alrededor de <code>botPlayer.chooseMove(...)</code> dentro de
+        <code>PlayMove</code>. Pero eso metería Micrometer en la aplicación y mezclaría lo que hace un caso de uso con cómo
+        se observa (<a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/017-metricas-fuera-de-los-casos-de-uso.md" target="_blank" rel="noopener">ADR-017</a>).
+        En su lugar, un <strong>decorador</strong> implementa el mismo puerto y envuelve al real:</p>
+      <figure class="code">
+        <figcaption><span>bootstrap/TimedBotPlayer.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-bootstrap/src/main/java/com/arquitechthor/kopi/bootstrap/TimedBotPlayer.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">final class TimedBotPlayer implements BotPlayer {
+
+    private final BotPlayer bot;
+    private final MeterRegistry registry;
+
+    @Override
+    public Move chooseMove(Position position, BotProfile profile) {
+        var sample = Timer.start(registry);
+        var outcome = "error";
+        try {
+            var move = bot.chooseMove(position, profile);
+            outcome = "ok";
+            return move;
+        } finally {
+            sample.stop(Timer.builder("kopi.bot.move.duration")
+                    .tag("profile", profile.name())
+                    .tag("outcome", outcome)
+                    .publishPercentileHistogram()
+                    .register(registry));
+        }
+    }
+}</code></pre>
+      </figure>
+      <p>El caso de uso no cambia y sus pruebas no saben nada de métricas. Medir algo nuevo de un puerto es escribir otro
+        decorador. La cola expone <code>countQueued()</code>, una pregunta de negocio que un <code>Gauge</code> consulta
+        cuando Prometheus pide las métricas, y el perfil <code>metrics</code> de Docker Compose añade Prometheus y Grafana
+        con un <em>dashboard</em> ya hecho.</p>
+
+      <h3>El dominio emite códigos; los adaptadores traducen</h3>
+      <p>La interfaz está en inglés y español desde la primera pantalla
+        (<a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/011-i18n-dominio-emite-codigos.md" target="_blank" rel="noopener">ADR-011</a>).
+        La regla: <strong>el dominio y la aplicación nunca producen texto para personas</strong>. Emiten
+        <code>enum</code>s (<code>BLUNDER</code>, <code>STALEMATE</code>) y excepciones tipadas. El adaptador web las
+        traduce a una clave de mensajes con un <code>switch</code> de patrones anidados:</p>
+      <figure class="code">
+        <figcaption><span>adapter/web/GameController.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-adapter-web/src/main/java/com/arquitechthor/kopi/adapter/web/GameController.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">static String refusal(RuntimeException e) {
+    return switch (e) {
+        case GameRuleException rule -&gt; switch (rule) {
+            case IllegalMoveException _ -&gt; "ILLEGAL_MOVE";
+            case NotYourTurnException _ -&gt; "NOT_YOUR_TURN";
+            case GameNotInProgressException _ -&gt; "GAME_NOT_IN_PROGRESS";
+        };
+        case InvalidUciException _ -&gt; "INVALID_UCI";
+        case VersionMismatchException _, ConcurrentGameUpdateException _ -&gt; "VERSION_MISMATCH";
+        case BotUnavailableException _ -&gt; "BOT_UNAVAILABLE";
+        default -&gt; throw e;
+    };
+}</code></pre>
+      </figure>
+      <p>El <code>switch</code> interior no tiene <code>default</code>: <code>GameRuleException</code> es una jerarquía
+        sellada, así que añadir una regla nueva obliga a traducirla. Y una prueba falla si una clave existe en un idioma y
+        no en el otro.</p>
+
+      <h3>Seguridad de una aplicación «solo local»</h3>
+      <p>Que la aplicación escuche solo en <code>127.0.0.1</code> no basta: el navegador de la persona sí llega, y con él
+        <strong>cualquier página que visite</strong>. Una web maliciosa puede enviar formularios a
+        <code>localhost:8080</code> o usar <em>DNS rebinding</em> para leer la API. En lugar de añadir Spring Security, que
+        no protege del <em>rebinding</em>, un filtro propio (<code>LocalAccessFilter</code>,
+        <a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/016-solo-esta-maquina.md" target="_blank" rel="noopener">ADR-016</a>)
+        solo responde si la cabecera <code>Host</code> es de esta máquina, y rechaza las peticiones que cambian datos si su
+        <code>Origin</code> o <code>Sec-Fetch-Site</code> dicen que vienen de otro sitio.</p>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>El <strong>patrón decorador</strong> es la herramienta natural de la arquitectura hexagonal para lo transversal:
+          como los puertos son interfaces, puedes envolver cualquier adaptador para medir, registrar, reintentar o cachear
+          sin tocar ni el caso de uso ni el adaptador.</p>
+      </div>
+    </section>
+
+    <section id="en-linea">
+      <h2><span class="num">11</span>Jugar en línea con un relé que no sabe ajedrez</h2>
+      <p>Para jugar contra un amigo, dos Kopi Chess en dos PCs tienen que intercambiar jugadas. Las restricciones: coste
+        casi cero, ningún puerto abierto en casa, partidas por correspondencia (el rival puede tardar días) y, sobre todo,
+        <strong>las reglas siguen viviendo en el dominio de Java</strong>, no reescritas en otro lenguaje en la nube.</p>
+      <p>La solución (<a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/adr/020-rele-de-partidas.md" target="_blank" rel="noopener">ADR-020</a>)
+        es un <strong>relé sin reglas</strong> en AWS:</p>
+      <div class="flujo" role="img" aria-label="Flujo del relé: cada Kopi Chess valida con su dominio y habla con API Gateway, Lambda y DynamoDB; un WebSocket solo avisa de novedades">
+        <div class="flujo-fila">
+          <span class="flujo-caja">Kopi Chess A<small>valida su jugada con el dominio</small></span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja aws">API Gateway HTTP<small>autorizador de Cognito</small></span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja aws">Lambda (Node.js)<small>¿es su partida y su turno?</small></span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja dato">DynamoDB<small>un ítem por partida</small></span>
+        </div>
+        <div class="flujo-fila">
+          <span class="flujo-caja aws">API Gateway WebSocket<small>solo «hay novedades»</small></span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja">Kopi Chess B<small>pide la jugada por HTTP y la valida</small></span>
+        </div>
+        <p class="flujo-nota">Ningún PC acepta conexiones de fuera: los dos solo hacen peticiones salientes.</p>
+      </div>
+      <ul>
+        <li>El relé comprueba <strong>quién puede hacer qué</strong> (que sea su partida, su turno, el número de jugada
+          siguiente), nunca si una jugada es legal.</li>
+        <li>Cada Kopi Chess valida su jugada antes de enviarla y la del rival al recibirla, y compara el <strong>hash
+          Zobrist</strong> de la posición que viaja con cada jugada. Si no cuadra, la partida queda marcada como
+          desincronizada.</li>
+        <li>Una partida es <strong>un único ítem</strong> de DynamoDB con sus jugadas dentro. El orden se garantiza con
+          <strong>una escritura condicional</strong> (<code>lastPly = :anterior</code>): cada número de jugada se acepta una
+          sola vez, sin bloqueos.</li>
+        <li>El WebSocket <strong>solo avisa</strong>; los datos se piden siempre por HTTP. Si un aviso se pierde no pasa
+          nada: Kopi Chess sincroniza al abrir y al reconectar.</li>
+        <li>Las partidas caducan con TTL a los 30 días sin jugadas, y hay límites por usuario (<code>429</code>) y un
+          presupuesto mensual en AWS Budgets.</li>
+      </ul>
+      <h3>Zobrist: la huella de una posición</h3>
+      <p>El hash Zobrist asigna un número aleatorio de 64 bits a cada característica de una posición (un caballo blanco en
+        f3, que muevan las negras, cada derecho de enroque, la columna de captura al paso) y la huella es el
+        <strong>XOR</strong> de las presentes. Dos posiciones iguales dan siempre el mismo número; dos distintas casi nunca.
+        Sirve para detectar repeticiones sin comparar tableros y, aquí, para que dos PCs comprueben que ven la misma
+        posición. La semilla es fija (<code>"KopiChes"</code> en hexadecimal) y el generador,
+        <code>L64X128MixRandom</code>, está especificado por su algoritmo: la misma posición da la misma huella en cualquier
+        JVM.</p>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Un servidor no tiene por qué entender el negocio para coordinarlo. Separar <strong>autorización</strong> (quién
+          puede escribir qué, en el relé) de <strong>validación</strong> (si la jugada es legal, en el dominio) dejó la nube
+          pequeña, barata y fácil de sustituir por un relé falso en las pruebas.</p>
+      </div>
+      <p class="mas">Los servicios de AWS de este apartado los explican los Apuntes AWS:
+        <a href="https://arquitechthor.github.io/aws-cert-study/servicios/dynamodb.html#kopi-chess">DynamoDB</a>,
+        <a href="https://arquitechthor.github.io/aws-cert-study/servicios/api-gateway.html#kopi-chess">API Gateway</a> y
+        <a href="https://arquitechthor.github.io/aws-cert-study/servicios/cognito.html">Cognito</a>.</p>
+    </section>
+
+    <section id="java">
+      <h2><span class="num">12</span>Java moderno, dónde verlo</h2>
+      <p>Kopi Chess usa Java 25 sin miedo. Esta es una guía rápida para encontrar cada característica en el código:</p>
+      <div class="tarjetas">
+        <div class="tarjeta"><h4>Records</h4><p><code>Square</code>, <code>Piece</code>, <code>WinChance</code>, los comandos de los casos de uso. Valores inmutables con constructores compactos que validan.</p></div>
+        <div class="tarjeta"><h4>Sealed interfaces</h4><p><code>MoveKind</code>, <code>Evaluation</code>, las excepciones de reglas. Alternativas cerradas que el compilador conoce.</p></div>
+        <div class="tarjeta"><h4>Pattern matching en switch</h4><p><code>Position.apply</code>, <code>WinChance.of</code>, <code>GameController.refusal</code>, con patrones de <em>record</em> y guardas <code>when</code>.</p></div>
+        <div class="tarjeta"><h4>Patrones sin nombre <code>_</code></h4><p>En esos mismos <code>switch</code>, en los <code>catch (InterruptedException _)</code> y en las lambdas (<code>_ -&gt; …</code>).</p></div>
+        <div class="tarjeta"><h4>Hilos virtuales</h4><p><code>AnalysisWorker</code>: <code>Thread.ofVirtual()</code> para los <em>workers</em> de la cola.</p></div>
+        <div class="tarjeta"><h4>Stream gatherers</h4><p><code>AnalysisSummary</code>: <code>Gatherers.windowSliding</code> para recorrer pares de posiciones y ventanas de volatilidad.</p></div>
+        <div class="tarjeta"><h4>Colecciones secuenciadas</h4><p><code>Board.pieces()</code> devuelve un <code>SequencedMap</code>: el orden forma parte del contrato.</p></div>
+        <div class="tarjeta"><h4>Comentarios en Markdown</h4><p>Todo el Javadoc está escrito con <code>///</code> (JEP 467): se lee bien en el código y en la documentación generada.</p></div>
+        <div class="tarjeta"><h4>Text blocks</h4><p>El SQL de los repositorios y los datos de las pruebas parametrizadas (<code>@CsvSource(textBlock = …)</code>).</p></div>
+        <div class="tarjeta"><h4>Concurrencia estructurada (preview)</h4><p>Solo en <code>kopi-labs</code>, aislado por una regla de ArchUnit para que una función <em>preview</em> nunca llegue a la aplicación (ADR-012).</p></div>
+      </div>
+    </section>
+
+    <section id="pruebas">
+      <h2><span class="num">13</span>Las pruebas como documentación</h2>
+      <p>La arquitectura se nota sobre todo en las pruebas: cada anillo se prueba con la herramienta justa y a la velocidad
+        que permite.</p>
+      <div class="tarjetas">
+        <div class="tarjeta"><span class="etiqueta nucleo">Dominio</span><h4>Milisegundos, sin nada</h4><p>Java puro con JUnit 5 y AssertJ. Las posiciones se escriben siempre en FEN, y los nombres de las pruebas se leen como frases.</p></div>
+        <div class="tarjeta"><span class="etiqueta nucleo">Aplicación</span><h4>Dobles en memoria</h4><p><code>InMemoryGameRepository</code>, <code>ScriptedBot</code>… implementan los puertos sin base de datos ni motor. Un caso de uso se prueba con <code>new</code>.</p></div>
+        <div class="tarjeta"><span class="etiqueta salida">Adaptadores</span><h4>Contra la tecnología real</h4><p>Testcontainers levanta un PostgreSQL de verdad: dos <em>workers</em> reclamando a la vez, la recuperación tras un reinicio, el bloqueo optimista.</p></div>
+        <div class="tarjeta"><h4>Arquitectura y corrección</h4><p>ArchUnit para la regla de dependencias, <em>perft</em> y la prueba diferencial con Stockfish para las reglas, y una prueba de que ningún idioma se queda sin traducción.</p></div>
+      </div>
+      <p>Para desarrollar, <code>TestKopiApplication</code> arranca la aplicación desde el IDE con un PostgreSQL desechable
+        de Testcontainers. Las pruebas lentas se activan con <code>./mvnw verify -Pslow-tests</code>.</p>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Si probar un caso de uso exige arrancar Spring y una base de datos, la arquitectura te está avisando. Unos
+          puertos bien diseñados hacen que <strong>los dobles de prueba sean triviales</strong> y que la mayoría de las
+          pruebas sean rápidas.</p>
+      </div>
+    </section>
+
+    <section id="adr">
+      <h2><span class="num">14</span>Decisiones por escrito: los ADR</h2>
+      <p>Un <strong>ADR</strong> (<em>Architecture Decision Record</em>) es un documento corto con tres partes: contexto
+        (qué problema hay), decisión (qué se hace) y consecuencias (qué se gana y qué se pierde). Un ADR aceptado no se
+        edita: si la decisión cambia, se escribe otro que lo sustituye. Kopi Chess tiene 22, y leerlos es la forma más rápida
+        de entender por qué el código es como es. Algunos de los más instructivos:</p>
+      <ul>
+        <li><strong>ADR-001</strong> y <strong>ADR-002</strong>: módulos Maven, ArchUnit y casos de uso sin Spring.</li>
+        <li><strong>ADR-003</strong>: PostgreSQL en lugar de MongoDB.</li>
+        <li><strong>ADR-004</strong>: reglas propias verificadas con <em>perft</em> (con un «plan B» si el generador se
+          atascaba).</li>
+        <li><strong>ADR-007</strong>: la cola en PostgreSQL con <code>SKIP LOCKED</code>.</li>
+        <li><strong>ADR-010</strong>: interfaz con Thymeleaf, sin SPA y sin htmx.</li>
+        <li><strong>ADR-014</strong>: un ejemplo valioso de decisión que <em>corrige el plan</em> al descubrir un problema
+          real.</li>
+        <li><strong>ADR-017</strong>: métricas con decoradores.</li>
+        <li><strong>ADR-020</strong>: el relé en AWS sin reglas de ajedrez.</li>
+      </ul>
+      <p><a href="https://github.com/arquitechthor/kopi-chess/tree/main/docs/adr" target="_blank" rel="noopener">Todos los ADR en GitHub →</a></p>
+    </section>
+
+    <section id="lecciones">
+      <h2><span class="num">15</span>Lecciones que deja</h2>
+      <ol class="lecciones">
+        <li><h4>La arquitectura se demuestra con el compilador</h4><p>Un módulo por anillo y reglas de ArchUnit convierten la regla de dependencias en un error de compilación o en una prueba roja, no en una conversación en una revisión de código.</p></li>
+        <li><h4>Diseña los puertos desde la necesidad, no desde la tecnología</h4><p><code>BotPlayer</code> y <code>ChessEngine</code> son puertos distintos aunque hoy los sirva el mismo programa. El puerto habla el idioma del caso de uso.</p></li>
+        <li><h4>El núcleo sin framework es más fácil de probar y de leer</h4><p>Casos de uso con constructor y un <code>@Configuration</code> explícito: se ve qué usa qué, y las pruebas no necesitan Spring.</p></li>
+        <li><h4>Haz imposibles los estados imposibles</h4><p><em>Sealed</em>, <em>records</em> inmutables y constructores que validan (<code>MateIn(0)</code> no existe) eliminan clases enteras de errores.</p></li>
+        <li><h4>Busca un oráculo antes de escribir algo complejo</h4><p><em>Perft</em> y la prueba diferencial dan una meta objetiva: las reglas son correctas cuando los números coinciden.</p></li>
+        <li><h4>Lo transversal va en decoradores</h4><p>Métricas, registros o reintentos envuelven puertos; el caso de uso no se entera.</p></li>
+        <li><h4>Usa la infraestructura que ya tienes hasta que se quede corta</h4><p>Una cola en PostgreSQL con <code>SKIP LOCKED</code> evita un <em>broker</em> entero, con trabajos que sobreviven a un reinicio.</p></li>
+        <li><h4>No retengas transacciones mientras esperas a otros</h4><p>Bloqueo optimista, un guardado al final y transacciones cortas en el repositorio.</p></li>
+        <li><h4>Un servidor puede coordinar sin entender</h4><p>El relé autoriza; los dominios validan. La nube queda pequeña y barata.</p></li>
+        <li><h4>Escribe las decisiones, también las que corrigen el plan</h4><p>Un ADR explica el porqué que el código no puede contar, y ADR-014 muestra que cambiar de idea con argumentos es parte del trabajo.</p></li>
+      </ol>
+    </section>
+
+    <section id="practica">
+      <h2><span class="num">16</span>Para practicar</h2>
+      <p>La mejor forma de entender una arquitectura es cambiarla. Algunos ejercicios con el repositorio clonado, de menos
+        a más:</p>
+      <ol class="pasos">
+        <li><strong>Rompe la arquitectura a propósito.</strong> Importa una clase de Spring en <code>kopi-domain</code> o
+          haz que un adaptador use otro, ejecuta <code>./mvnw verify</code> y lee qué falla y por qué.</li>
+        <li><strong>Encuentra un error con <em>perft divide</em>.</strong> Cambia una línea de los derechos de enroque en
+          <code>Position.apply</code>, mira qué número de <code>PerftTest</code> cambia y localiza la rama con
+          <code>Perft.divide</code>.</li>
+        <li><strong>Escribe un decorador.</strong> Un <code>LoggingBotPlayer</code> que registre cada jugada elegida, y
+          conéctalo en <code>UseCaseConfiguration</code> sin tocar <code>PlayMove</code>.</li>
+        <li><strong>Añade un bot.</strong> Un sexto perfil en <code>BotProfile</code>: el <code>switch</code> del enrutador
+          dejará de compilar hasta que decidas qué adaptador lo juega.</li>
+        <li><strong>Añade un adaptador.</strong> Un <code>GameRepository</code> en memoria para una versión de demostración,
+          sin cambiar ni el dominio ni la aplicación.</li>
+      </ol>
+      <p>Por dónde empezar a leer: la guía
+        <a href="https://github.com/arquitechthor/kopi-chess/blob/main/docs/arquitectura.md" target="_blank" rel="noopener"><code>docs/arquitectura.md</code></a>,
+        y para contribuir, las <a href="https://github.com/arquitechthor/kopi-chess/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22" target="_blank" rel="noopener"><em>good first issues</em></a>.</p>
+    </section>
+
+    <section id="profundiza">
+      <h2><span class="num">17</span>Profundiza</h2>
+      <p>Los conceptos de esta página tienen su ficha en Tech Spider (el mapa de tecnologías) o en los Apuntes AWS. Las
+        fichas que aún no están escritas muestran una página de «próximamente».</p>
+      <div class="profundiza">
+        <div>
+          <h3>En Tech Spider</h3>
+          <div class="enlaces">
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/temas/hexagonal-architecture.html">Arquitectura hexagonal</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=clean-architecture">Clean Architecture</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=modular-monolith">Monolito modular</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=solid">SOLID</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=dependency-injection">Inyección de dependencias</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=structural-patterns">Patrones estructurales (decorador)</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=modern-java">Java moderno</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=concurrency">Concurrencia</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=streams-lambdas">Streams y lambdas</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/temas/spring-framework.html">Spring Framework</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=spring-boot">Spring Boot</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=maven">Maven</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=postgresql">PostgreSQL</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=transactions-acid">Transacciones y ACID</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=flyway">Flyway</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=unit-testing">Pruebas unitarias</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=test-doubles">Dobles de prueba</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=junit-5">JUnit 5</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=testcontainers">Testcontainers</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=docker-compose">Docker Compose</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=metrics">Métricas</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=prometheus">Prometheus</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=websockets">WebSockets</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=hashing">Hashing</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=technical-decision-making">Toma de decisiones técnicas</a>
+          </div>
+        </div>
+        <div>
+          <h3>En los Apuntes AWS</h3>
+          <div class="enlaces">
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/dynamodb.html#kopi-chess">DynamoDB</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/api-gateway.html#kopi-chess">API Gateway</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/lambda.html">Lambda</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/cognito.html">Cognito</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/budgets.html">Budgets</a>
+          </div>
+          <h3 style="margin-top:24px">Otros aprendizajes</h3>
+          <div class="enlaces">
+            <a href="prompt-quest.html">Prompt Quest: hexagonal en TypeScript con IA</a>
+            <a href="kopi-tools.html">Kopi Tools: serverless en AWS</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </article>
+</div>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-brand">© 2026 Héctor Guzmán · arquitechthor</div>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/guzman6001/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/arquitechthor" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <nav class="footer-sitios" aria-label="Webs de Héctor Guzmán">
+      <a href="https://kopitools.link">Kopi Tools</a>
+      <a href="https://arquitechthor.github.io/aws-cert-study/">Apuntes AWS</a>
+      <a href="https://arquitechthor.github.io/arquitechthor-spider/">Tech Spider</a>
+      <a href="../#kopi-chess">Kopi Chess</a>
+      <a href="../#prompt-quest">Prompt Quest</a>
+      <a href="https://arquitechthor.github.io/" aria-current="true">Arquitechthor</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/aprendizajes.js" defer></script>
+
+</body>
+</html>

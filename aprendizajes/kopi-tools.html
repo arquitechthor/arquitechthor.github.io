@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aprendizajes de Kopi Tools — Héctor Guzmán (arquitechthor)</title>
+<meta name="description" content="Caso de estudio de Kopi Tools: una suite personal 100 % serverless en AWS con Cognito, API Gateway, Lambda, DynamoDB y S3; multiusuario con ownerId, subidas con URL prefirmadas, coste casi cero y un backend compartido por varios proyectos.">
+<link rel="canonical" href="https://arquitechthor.github.io/aprendizajes/kopi-tools.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="arquitechthor">
+<meta property="og:title" content="Aprendizajes de Kopi Tools">
+<meta property="og:description" content="Una aplicación real 100 % serverless en AWS por un par de dólares al mes: autenticación, multiusuario, ficheros grandes y costes, explicados.">
+<meta property="og:url" content="https://arquitechthor.github.io/aprendizajes/kopi-tools.html">
+<meta property="og:image" content="https://arquitechthor.github.io/assets/kopi-mascot.jpg">
+<meta property="og:locale" content="es_ES">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../assets/favicon-192.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="../#top">
+      <img class="nav-avatar" src="../assets/arquitechthor.jpg" alt="" width="32" height="32">
+      Héctor Guzmán
+    </a>
+    <div class="nav-links">
+      <a href="../#top">Inicio</a>
+      <a href="../#certificaciones">Certificaciones</a>
+      <a href="../#conocimiento">Conocimiento</a>
+      <div class="nav-group">
+        <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navProyectos">Mis proyectos <span aria-hidden="true">▾</span></button>
+        <div class="nav-submenu" id="navProyectos">
+          <a href="../#proyectos">Todos</a>
+          <a href="../#apuntes-aws">Apuntes AWS</a>
+          <a href="../#tech-spider">Tech Spider</a>
+          <a href="../#kopi">Kopi Tools</a>
+          <a href="../#kopi-chess">Kopi Chess</a>
+          <a href="../#prompt-quest">Prompt Quest</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navAprendizajes">Aprendizajes de <span aria-hidden="true">▾</span></button>
+        <div class="nav-submenu" id="navAprendizajes">
+          <a href="kopi-chess.html">Kopi Chess</a>
+          <a href="kopi-tools.html" aria-current="page">Kopi Tools</a>
+          <a href="prompt-quest.html">Prompt Quest</a>
+        </div>
+      </div>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+  </div>
+</nav>
+
+<main>
+<header class="cs-hero">
+  <div class="container">
+    <span class="eyebrow">Aprendizajes de · Kopi Tools</span>
+    <h1><span class="gradient-text">Kopi Tools</span>, un caso de estudio de serverless en AWS</h1>
+    <p class="cs-lead">
+      Kopi Tools es mi suite personal (metas, agenda, notas, enlaces, vídeos, fotos, documentos y una base de
+      conocimiento pública), en la web y en Android. Es también donde aprendo AWS con servicios de verdad: no hay ni un
+      servidor encendido, y cuesta un par de dólares al mes. Su código no es público, pero las decisiones de arquitectura
+      sí se pueden contar, y son la parte que más enseña.
+    </p>
+    <div class="cs-stats" aria-label="Kopi Tools en cifras">
+      <div class="cert-code"><strong>0</strong><span>servidores propios encendidos</span></div>
+      <div class="cert-code"><strong>~1,4 $</strong><span>al mes con uso familiar</span></div>
+      <div class="cert-code"><strong>2</strong><span>frontends sobre la misma API</span></div>
+      <div class="cert-code"><strong>4</strong><span>proyectos que usan su backend</span></div>
+    </div>
+    <div class="cs-actions">
+      <a class="btn btn-primary" href="https://kopitools.link">Visitar Kopi Tools →</a>
+      <a class="btn btn-secondary" href="../#kopi">Volver al proyecto</a>
+    </div>
+  </div>
+</header>
+
+<div class="container cs-layout">
+  <details class="cs-toc" open>
+    <summary>Índice de la página</summary>
+    <p>En esta página</p>
+    <ol>
+      <li><a href="#que-es">1. Qué es y por qué estudiarlo</a></li>
+      <li><a href="#arquitectura">2. La arquitectura de un vistazo</a></li>
+      <li><a href="#auth">3. Autenticación: Cognito sin servidor propio</a></li>
+      <li><a href="#tenant">4. Multiusuario: ownerId = sub</a></li>
+      <li><a href="#ficheros">5. Ficheros grandes sin pasar por la API</a></li>
+      <li><a href="#lambdas">6. Lambdas sin framework</a></li>
+      <li><a href="#coste">7. El coste, servicio a servicio</a></li>
+      <li><a href="#plataforma">8. Un backend para varios proyectos</a></li>
+      <li><a href="#frontends">9. Dos frontends, un contrato</a></li>
+      <li><a href="#lecciones">10. Lecciones que deja</a></li>
+      <li><a href="#profundiza">11. Profundiza</a></li>
+    </ol>
+  </details>
+
+  <article class="cs-doc">
+
+    <section id="que-es">
+      <h2><span class="num">01</span>Qué es y por qué estudiarlo</h2>
+      <p>Kopi Tools empezó como una galería familiar de fotos y vídeos y fue creciendo: hoy tiene metas, agenda con
+        recordatorios, notas, logros, hábitos, lista de la compra, análisis FODA, enlaces, vídeos de YouTube, documentos y
+        una sección <strong>Conocimiento</strong> con notas de estudio públicas (la que se ve en la portada de esta web).
+        Cada usuario ve solo sus datos, sin anuncios ni seguimiento.</p>
+      <p>Como caso de estudio, lo valioso es que resuelve con servicios gestionados de AWS los problemas que tiene
+        <strong>cualquier aplicación real</strong>: registro y aprobación de usuarios, aislamiento de datos entre usuarios,
+        ficheros de varios gigas, varios clientes (web, Android, otras webs, una aplicación de escritorio) y un coste que no
+        crece si nadie la usa. Es un proyecto de aprendizaje: prioriza construir con AWS «de verdad» y mantener el coste
+        cerca de cero, no la escala empresarial, y lo dice abiertamente en su documentación.</p>
+    </section>
+
+    <section id="arquitectura">
+      <h2><span class="num">02</span>La arquitectura de un vistazo</h2>
+      <p>Desde julio de 2026 la aplicación es <strong>100 % serverless</strong>: no hay ningún proceso que «esté siempre
+        encendido». Todo se ejecuta bajo demanda (Lambda), se sirve desde una CDN (CloudFront) o vive en almacenamiento
+        gestionado (S3, DynamoDB).</p>
+      <div class="flujo" role="img" aria-label="Arquitectura de Kopi Tools: el navegador inicia sesión con Cognito, carga la web desde CloudFront y S3, llama a la API de API Gateway y Lambda con DynamoDB, y sube ficheros directamente a S3">
+        <div class="flujo-fila">
+          <span class="flujo-caja">Navegador / app Android</span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja aws">Cognito<small>1. inicio de sesión (SRP)</small></span>
+        </div>
+        <div class="flujo-fila">
+          <span class="flujo-caja">Navegador</span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja aws">CloudFront<small>2. la web</small></span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja dato">S3 privado<small>ficheros estáticos</small></span>
+        </div>
+        <div class="flujo-fila">
+          <span class="flujo-caja">Navegador<small>Authorization: Bearer JWT</small></span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja aws">API Gateway HTTP<small>3. valida el JWT</small></span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja aws">Lambdas de dominio</span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja dato">DynamoDB<small>tablas kopi_*</small></span>
+        </div>
+        <div class="flujo-fila">
+          <span class="flujo-caja">Navegador</span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja dato">S3 de medios<small>4. PUT con URL prefirmada</small></span>
+          <span class="flujo-flecha">→</span>
+          <span class="flujo-caja aws">Lambda de reconciliación<small>evento ObjectCreated</small></span>
+        </div>
+        <p class="flujo-nota">Además: SES para avisar de altas nuevas, Bedrock para generar preguntas de repaso, Route 53 y ACM para el dominio y los certificados, y GitHub Actions para desplegar.</p>
+      </div>
+    </section>
+
+    <section id="auth">
+      <h2><span class="num">03</span>Autenticación: Cognito sin servidor propio</h2>
+      <p>El inicio de sesión y el registro hablan <strong>directamente con Cognito</strong> desde el navegador, con el SDK de
+        Amplify. Nunca pasan por un backend propio.</p>
+      <ul>
+        <li><strong>SRP</strong> (<em>Secure Remote Password</em>): la contraseña nunca viaja por la red, ni siquiera cifrada;
+          cliente y Cognito se demuestran que la conocen.</li>
+        <li><strong>Clientes públicos con PKCE</strong>: una SPA o una app móvil no pueden guardar un secreto (cualquiera
+          puede leer su código), así que sus <em>App Clients</em> no tienen <em>client secret</em> y el flujo OAuth usa PKCE,
+          que protege el intercambio del código de autorización sin necesitarlo.</li>
+        <li><strong>API Gateway valida el JWT</strong> (firma y caducidad) antes de invocar cualquier Lambda: ninguna Lambda
+          ejecuta código para un usuario no autenticado.</li>
+        <li><strong>Altas con aprobación</strong>: un <em>trigger</em> de Cognito (<em>Pre-Sign-Up</em>) desactiva la
+          autoconfirmación y avisa al administrador por SES. Hasta que un administrador lo aprueba, el usuario no pertenece a
+          ningún grupo y la API le responde «tu cuenta está pendiente de aprobación».</li>
+      </ul>
+      <div class="callout">
+        <span class="callout-titulo">Un matiz que costó un error</span>
+        <p>En Cognito, el <strong>estado</strong> de un usuario (¿confirmó su correo?) y su <strong>rol</strong> (¿lo aprobó
+          un administrador?, es decir, su grupo) son cosas independientes. Confundirlas provocó un fallo real en el flujo de
+          aprobación. La solución fue tratarlas por separado y que aprobar a alguien fuerce también la confirmación cuando
+          hace falta.</p>
+      </div>
+      <p class="mas">Más en los Apuntes AWS: <a href="https://arquitechthor.github.io/aws-cert-study/servicios/cognito.html#kopi">Cognito</a> y
+        <a href="https://arquitechthor.github.io/aws-cert-study/servicios/api-gateway.html#kopi">API Gateway</a>.</p>
+    </section>
+
+    <section id="tenant">
+      <h2><span class="num">04</span>Multiusuario: ownerId = sub</h2>
+      <p>Cada usuario de Cognito tiene un identificador único e inmutable, el <code>sub</code>. Kopi lo usa como <strong>clave
+        de inquilino</strong>: todo lo que alguien crea lleva un atributo <code>ownerId</code> igual a su <code>sub</code>, y
+        cada Lambda lo extrae del JWT ya validado.</p>
+      <figure class="code">
+        <figcaption><span>Patrón de una Lambda de listado (ilustrativo)</span></figcaption>
+<pre><code data-lang="ts">export const handler = async (event) =&gt; {
+  // El sub viene del JWT que API Gateway ya ha validado: el cliente no puede elegirlo.
+  const ownerId = event.requestContext.authorizer.jwt.claims.sub;
+
+  const result = await ddb.send(new QueryCommand({
+    TableName: 'kopi_links',
+    IndexName: 'owner-createdAt-index',          // un GSI por tabla con ownerId como clave
+    KeyConditionExpression: 'ownerId = :owner',
+    ExpressionAttributeValues: { ':owner': ownerId },
+    ScanIndexForward: false,                      // los más recientes primero
+  }));
+  return ok(result.Items);
+};</code></pre>
+      </figure>
+      <p>Tres ideas importantes:</p>
+      <ul>
+        <li><strong>La comprobación vive en cada Lambda</strong>, no solo en el autorizador. El autorizador garantiza «esta
+          petición trae un JWT válido»; no garantiza «este usuario puede ver este recurso concreto». Esa segunda pregunta es
+          de negocio y la responde el código.</li>
+        <li><strong>Un índice por propietario en cada tabla</strong> (<code>ownerId</code> + fecha o categoría), para pedir
+          «todo lo de este usuario» con una <code>Query</code> y no con un <code>Scan</code> de la tabla entera.</li>
+        <li><strong>Un prefijo por propietario en S3</strong>: <code>media/{ownerId}/{tipo}/{aaaa/MM}/{uuid}.ext</code>. Los
+          ficheros de cada usuario quedan separados también físicamente.</li>
+      </ul>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Autenticar no es autorizar. Toma la identidad <strong>del token verificado, nunca del cuerpo de la
+          petición</strong>, y aplica el filtro por propietario en el código de cada operación, aunque haya un autorizador
+          delante.</p>
+      </div>
+      <p class="mas">Cómo diseñar las claves e índices, en los Apuntes AWS: <a href="https://arquitechthor.github.io/aws-cert-study/servicios/dynamodb.html#kopi">DynamoDB</a>.</p>
+    </section>
+
+    <section id="ficheros">
+      <h2><span class="num">05</span>Ficheros grandes sin pasar por la API</h2>
+      <p>API Gateway tiene un límite de 10 MB por petición, y pasar un vídeo de varios gigas por una Lambda sería lento y
+        caro. La solución es que <strong>los ficheros nunca pasen por la API</strong>:</p>
+      <ol class="pasos">
+        <li>La web pide una <strong>URL prefirmada</strong> a una Lambda. La Lambda no toca el fichero: solo firma una URL
+          temporal que permite un <code>PUT</code> de una clave concreta de S3, y devuelve también el <code>uuid</code> de
+          esa clave.</li>
+        <li>El navegador sube el fichero <strong>directamente a S3</strong> con esa URL.</li>
+        <li>La web llama a <code>POST /resources</code> con el mismo <code>uuid</code> como identificador, y se crea el
+          registro en DynamoDB.</li>
+        <li><strong>Red de seguridad</strong>: cada objeto nuevo en S3 dispara una Lambda de reconciliación que crea el
+          registro si aún no existe, con una escritura condicional (<code>attribute_not_exists(id)</code>). Así, un fichero
+          que llega a S3 por otra vía (una herramienta de subida por lotes) también aparece, y el registro que creó la web
+          nunca se sobrescribe.</li>
+      </ol>
+      <h3>Cuando el fichero pesa gigas: subida multiparte</h3>
+      <p>Hasta 500 MB, un único <code>PUT</code>. Por encima, la web usa <strong>subida multiparte</strong>: partes de 100
+        MiB, cuatro en paralelo, cada una <strong>firmada justo antes de enviarla</strong> (así una subida de horas nunca se
+        encuentra una URL caducada) y reintentada si falla la red o S3 responde con un error temporal. Una regla de ciclo de
+        vida del bucket aborta las subidas multiparte incompletas a los 7 días, para no pagar por trozos huérfanos.</p>
+      <h3>Más decisiones en el mismo flujo</h3>
+      <ul>
+        <li><strong>Las miniaturas las genera el cliente</strong> (con un <code>&lt;canvas&gt;</code> en el navegador) y se suben
+          junto al original con una clave derivable (<code>…/{uuid}_thumb.jpg</code>). No hace falta una Lambda de
+          procesamiento de imágenes ni un atributo más en la base de datos.</li>
+        <li><strong>Límites por tipo de cuenta</strong>, comprobados en el cliente (para avisar pronto) y en el servidor (para
+          que valga). Y la documentación reconoce una laguna conocida y aceptada, con su porqué: mejor un riesgo pequeño
+          documentado que uno escondido.</li>
+        <li>Las URL de descarga también son prefirmadas y se <strong>renuevan 60 segundos antes de caducar</strong>.</li>
+      </ul>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Deja que el cliente hable directamente con el almacenamiento y que tu backend solo <strong>conceda
+          permisos</strong> (URL prefirmadas). Y cuando haya dos caminos para crear algo, haz las escrituras
+          <strong>idempotentes y condicionales</strong> para que no se pisen.</p>
+      </div>
+      <p class="mas">En los Apuntes AWS: <a href="https://arquitechthor.github.io/aws-cert-study/servicios/s3.html#kopi">S3</a> y
+        <a href="https://arquitechthor.github.io/aws-cert-study/servicios/lambda.html#kopi">Lambda</a>.</p>
+    </section>
+
+    <section id="lambdas">
+      <h2><span class="num">06</span>Lambdas sin framework</h2>
+      <p>El backend no tiene servidor ni <em>framework</em>: cada operación es un fichero <code>.mjs</code> de Node.js que
+        exporta un <em>handler</em>, detrás de una ruta de API Gateway. Las utilidades comunes (acceso a DynamoDB, respuestas
+        HTTP, lectura de grupos y del JWT) viven en una <strong>Lambda Layer</strong> compartida, y GitHub Actions despliega
+        cada función en cada <em>push</em> a la rama principal.</p>
+      <p>La ventaja es la simplicidad: una función pequeña es fácil de leer, de desplegar sola y de dar solo los permisos que
+        necesita. El inconveniente, que la propia documentación reconoce, es que estas Lambdas no tienen pruebas
+        automatizadas; es la deuda principal del proyecto y lo contrario de lo que hace
+        <a href="kopi-chess.html#pruebas">Kopi Chess</a>.</p>
+      <div class="callout ojo">
+        <span class="callout-titulo">Comparación útil</span>
+        <p><a href="prompt-quest.html#hexagonal">Prompt Quest</a> también es serverless, pero separa el dominio de los
+          <em>handlers</em> con puertos y adaptadores: puede ejecutarse entero en local y probarse sin AWS. Kopi Tools eligió
+          funciones sueltas, más rápidas de escribir. Ver los dos enfoques lado a lado es una buena forma de entender qué
+          compra cada uno.</p>
+      </div>
+    </section>
+
+    <section id="coste">
+      <h2><span class="num">07</span>El coste, servicio a servicio</h2>
+      <p>Con <em>serverless</em> se paga por uso real, no por tener infraestructura encendida. Para un puñado de usuarios, casi
+        todo cae en la capa gratuita:</p>
+      <div class="tabla-scroll">
+        <table>
+          <thead><tr><th>Servicio</th><th>Coste esperado a este volumen</th></tr></thead>
+          <tbody>
+            <tr><td>Lambda, DynamoDB bajo demanda, Cognito, CloudFront, SES, CloudWatch Logs</td><td>~0 $ (capas gratuitas)</td></tr>
+            <tr><td>API Gateway HTTP</td><td>~1 $ por millón de peticiones: fracciones de céntimo</td></tr>
+            <tr><td>ACM (certificados)</td><td>0 $ con CloudFront y API Gateway</td></tr>
+            <tr><td>Route 53</td><td>~0,50 $/mes (la zona alojada, fija)</td></tr>
+            <tr><td>S3: almacenamiento y transferencia</td><td>lo único que crece de verdad con el uso</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>La estimación para dos personas con uso familiar moderado sale en torno a <strong>1,4 $ al mes</strong>. Y el
+        análisis destapa el punto que domina el cálculo: el bucket de medios <strong>no está detrás de CloudFront</strong>, así
+        que cada reproducción de vídeo transfiere el fichero completo desde S3 a precio de transferencia saliente. En un
+        escenario de mucho vídeo, la factura subiría a unos 19 $ casi solo por eso. Saber <em>qué</em> partida escala es más útil
+        que el total.</p>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Haz la estimación de costes por servicio y con un ejemplo concreto, y busca la partida que crece con el uso. En
+          arquitecturas <em>serverless</em> pequeñas casi siempre es la <strong>transferencia de datos</strong>, no el
+          cómputo.</p>
+      </div>
+    </section>
+
+    <section id="plataforma">
+      <h2><span class="num">08</span>Un backend para varios proyectos</h2>
+      <p>Con el tiempo, el backend de Kopi se convirtió en una pequeña plataforma que usan otros proyectos:</p>
+      <div class="tarjetas">
+        <div class="tarjeta"><h4>Conocimiento público</h4><p>Esta web lee las notas de estudio de una API pública sin autenticación, limitada a un único propietario y con CORS restringido a los orígenes permitidos.</p></div>
+        <div class="tarjeta"><h4>Progreso de estudio</h4><p>Apuntes AWS y Tech Spider guardan el progreso en la cuenta Kopi (opcional), con su propio cliente de Cognito.</p></div>
+        <div class="tarjeta"><h4>Kopi Chess</h4><p>El relé de partidas en línea y el historial en la cuenta (<a href="kopi-chess.html#en-linea">ver el caso</a>), con un API WebSocket para los avisos.</p></div>
+        <div class="tarjeta"><h4>Preguntas con IA</h4><p>Una Lambda envía los apuntes a Claude Haiku en Bedrock y devuelve preguntas de repaso.</p></div>
+      </div>
+      <h3>Un autorizador por tipo de cliente</h3>
+      <p>Todas las webs de <code>arquitechthor.github.io</code> comparten origen y, por tanto, <code>localStorage</code>. Si una
+        tuviera un fallo de XSS, un token guardado ahí quedaría expuesto. Por eso cada familia de clientes tiene <strong>su
+        propio App Client y su propio autorizador JWT</strong>, que solo acepta tokens con esa audiencia: con un token de las
+        webs de estudio no se puede leer nada más de Kopi, y los de Kopi Chess solo dan acceso a lo de Kopi Chess. El API
+        WebSocket, que no admite autorizadores JWT, verifica el token a mano al conectar (firma RS256, emisor, cliente y
+        caducidad).</p>
+      <h3>Contenido que no se puede «congelar»</h3>
+      <p>La API pública de Conocimiento carga en dos niveles: primero la estructura de un tema y, al abrir cada recurso, su
+        contenido (o una URL prefirmada de S3 que caduca en una hora). Por esa caducidad el contenido no se puede copiar a
+        ficheros estáticos: es una decisión con consecuencias que conviene conocer antes de elegirla.</p>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>Cuando un backend sirve a varios clientes, <strong>aísla su confianza</strong>: un cliente y un autorizador por cada
+          familia de aplicaciones, con la audiencia justa. Si un token se filtra, el daño queda acotado a lo que ese cliente
+          necesitaba.</p>
+      </div>
+    </section>
+
+    <section id="frontends">
+      <h2><span class="num">09</span>Dos frontends, un contrato</h2>
+      <p>Kopi Tools tiene dos clientes completos sobre la misma API:</p>
+      <ul>
+        <li>La <strong>web</strong>, en Angular 19 con componentes <em>standalone</em> y <em>signals</em>, servida desde S3 y
+          CloudFront.</li>
+        <li>La <strong>app Android</strong>, en React 19 con Vite, empaquetada con Capacitor. Nació como copia de otra app de la
+          familia (Kopi Goals) y fue incorporando las herramientas de la web.</li>
+      </ul>
+      <p>La app Android <strong>no depende del código de la web</strong>: solo reutiliza su contrato REST. Cada funcionalidad
+        nueva se añade a las dos a la vez. Duplicar la interfaz cuesta trabajo, pero da libertad: cada cliente usa la
+        tecnología que mejor le va, y lo único que deben respetar es la API.</p>
+    </section>
+
+    <section id="lecciones">
+      <h2><span class="num">10</span>Lecciones que deja</h2>
+      <ol class="lecciones">
+        <li><h4>Serverless de verdad: nada encendido</h4><p>Lambda, DynamoDB bajo demanda, S3 y CloudFront dan una aplicación completa que no cuesta nada mientras nadie la usa.</p></li>
+        <li><h4>Autenticar no es autorizar</h4><p>El autorizador valida el token; cada Lambda decide qué puede ver ese usuario con el <code>sub</code> verificado.</p></li>
+        <li><h4>El cliente sube, el backend firma</h4><p>URL prefirmadas y subida multiparte para ficheros de cualquier tamaño, sin pasar por la API.</p></li>
+        <li><h4>Dos caminos, escrituras condicionales</h4><p>La reconciliación por eventos de S3 hace el sistema robusto sin pisar lo que ya existe.</p></li>
+        <li><h4>Mide el coste por partidas</h4><p>El total importa menos que saber qué crece con el uso: aquí, la transferencia de S3.</p></li>
+        <li><h4>Aísla la confianza entre clientes</h4><p>Un App Client y un autorizador por familia de aplicaciones acotan el daño de un token filtrado.</p></li>
+        <li><h4>Documenta también las lagunas</h4><p>Un riesgo aceptado y explicado es una decisión; uno escondido es un error esperando a ocurrir.</p></li>
+        <li><h4>La simplicidad tiene precio</h4><p>Funciones sueltas sin pruebas se escriben rápido, pero el coste llega después. Los otros dos casos muestran la alternativa.</p></li>
+      </ol>
+    </section>
+
+    <section id="profundiza">
+      <h2><span class="num">11</span>Profundiza</h2>
+      <div class="profundiza">
+        <div>
+          <h3>En los Apuntes AWS</h3>
+          <div class="enlaces">
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/cognito.html#kopi">Cognito</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/api-gateway.html#kopi">API Gateway</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/lambda.html#kopi">Lambda</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/dynamodb.html#kopi">DynamoDB</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/s3.html#kopi">S3</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/cloudfront.html#kopi">CloudFront</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/ses.html#kopi">SES</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/iam.html#kopi">IAM</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/route-53.html#kopi">Route 53</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/acm.html#kopi">ACM</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/cloudwatch.html#kopi">CloudWatch</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/servicios/bedrock.html#kopi">Bedrock</a>
+            <a href="https://arquitechthor.github.io/aws-cert-study/index.html?kopi=1">Todos los servicios usados en Kopi</a>
+          </div>
+        </div>
+        <div>
+          <h3>En Tech Spider</h3>
+          <div class="enlaces">
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=serverless-architecture">Arquitectura serverless</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=oauth2">OAuth 2.0</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=jwt">JWT</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=cost-optimization">Optimización de costes</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=nosql-databases">Bases de datos NoSQL</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=angular">Angular</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=react">React</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=github-actions">GitHub Actions</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=rest">REST</a>
+          </div>
+          <h3 style="margin-top:24px">Otros aprendizajes</h3>
+          <div class="enlaces">
+            <a href="kopi-chess.html">Kopi Chess: hexagonal en Java 25</a>
+            <a href="prompt-quest.html">Prompt Quest: hexagonal en TypeScript con IA</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </article>
+</div>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-brand">© 2026 Héctor Guzmán · arquitechthor</div>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/guzman6001/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/arquitechthor" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <nav class="footer-sitios" aria-label="Webs de Héctor Guzmán">
+      <a href="https://kopitools.link">Kopi Tools</a>
+      <a href="https://arquitechthor.github.io/aws-cert-study/">Apuntes AWS</a>
+      <a href="https://arquitechthor.github.io/arquitechthor-spider/">Tech Spider</a>
+      <a href="../#kopi-chess">Kopi Chess</a>
+      <a href="../#prompt-quest">Prompt Quest</a>
+      <a href="https://arquitechthor.github.io/" aria-current="true">Arquitechthor</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/aprendizajes.js" defer></script>
+
+</body>
+</html>

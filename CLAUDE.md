@@ -17,6 +17,8 @@ named `aws-cert-study` or `arquitechthor` here — they would shadow those proje
 ```
 index.html          # home: #top (Sobre mí hero) → #certificaciones → #conocimiento → #proyectos (intro) → #apuntes-aws → #kopi → #kopi-chess → #prompt-quest
                     # menu: Inicio · Certificaciones · Conocimiento · "Mis proyectos" dropdown (Todos, Apuntes AWS, Tech Spider, Kopi Tools, Kopi Chess, Prompt Quest)
+                    #       · "Aprendizajes de" dropdown (Kopi Chess, Kopi Tools, Prompt Quest); the Kopi Tools, Kopi Chess and Prompt Quest sections have an "Aprendizajes" button
+aprendizajes/       # case studies, one static page per project (kopi-chess, kopi-tools, prompt-quest) — see "Aprendizajes"
 conocimiento.html   # Tema detail page (?tema=<id>), rendered client-side by assets/conocimiento.js — see "Conocimiento"
 styles.css          # same palette/tokens as kopi-web and aws-cert-study (copied, not shared)
 robots.txt          # the domain-wide robots.txt (crawlers only read /robots.txt): lists this site's sitemap.xml and aws-cert-study's
@@ -29,6 +31,7 @@ assets/
   prompt-quest-arena.jpg # 720px downscale of prompt-quest/docs/img/stand-partida.png
   insignias/*.png        # Credly badge images, downscaled to 240px
   conocimiento.js        # fetches the public Conocimiento API of Kopi — see "Conocimiento"
+  aprendizajes.js        # only on aprendizajes/*.html: tiny syntax colouring of <pre><code data-lang> and the active entry of the side index
   nav.js                 # mobile menu toggle + active-link highlight (same block as kopi-web and aws-cert-study; policy "Mismo menú y pie en las tres webs" in ../kopi-docs/politicas.md) + the "Mis proyectos" dropdown, which only this site has
 ```
 
@@ -55,6 +58,23 @@ is opened. Because those URLs expire, the content can't be snapshotted into stat
 **CORS**: the API (HTTP API `kopi-api`) must keep `https://arquitechthor.github.io` in its
 allow-origins, or every `fetch` fails ("No se pudo cargar…"). For local preview serve on port
 4200 (`python -m http.server 4200`): `http://localhost:4200` is also allowed, other ports aren't.
+
+## Aprendizajes
+
+`aprendizajes/*.html` are long, hand-written case studies of the owner's projects (Spanish), sharing the
+"Aprendizajes" block of `styles.css` and `assets/aprendizajes.js`. Each page repeats the site nav (with
+`../` paths and `aria-current="page"` on its own entry in "Aprendizajes de") and footer. Building blocks:
+`.cs-hero` + `.cs-stats`, the side index `details.cs-toc` (sticky; a collapsible box under 1000 px),
+`<section id>` per chapter with `<h2><span class="num">NN</span>…`, `figure.code` (figcaption with a link
+to the file on GitHub; code escaped by hand, `data-lang="java|ts|sql|json|txt"`), `.callout`
+(`.leccion`, `.ojo`), `ol.pasos`, `.tarjetas`, `.anillos` (hexagonal rings), `.flujo` (service flow),
+`ol.lecciones` and `.profundiza` (links to Tech Spider fichas — `temas/<id>.html` if published, else
+`tema.html?id=<id>` — and to Apuntes AWS guides). Facts must come from the projects' code and docs
+(`../../kopi/kopi-chess`, `../prompt-quest`, `../../kopi/kopi-media-admin/documentation`). Kopi Tools'
+code is private: describe decisions, never identifiers (account, pool or client IDs, bucket names,
+domains). The Apuntes AWS guides have matching "Así lo uso en Prompt Quest / Kopi Chess" sections
+(`#prompt-quest`, `#kopi-chess`) and Tech Spider fichas a `#caso-real` section that link back here: keep
+the anchors in sync when renaming chapters. New pages go in `APRENDIZAJES` in `scripts/generate-sitemap.mjs`.
 
 ## Certificaciones
 
