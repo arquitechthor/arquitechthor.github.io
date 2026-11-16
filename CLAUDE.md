@@ -78,13 +78,15 @@ the anchors in sync when renaming chapters. New pages go in `APRENDIZAJES` in `s
 
 **One page per topic.** A project can be a case study of several topics. Each topic is its own page:
 `aprendizajes/<project>.html` is the first one (Kopi Chess: hexagonal architecture) and the rest are
-`aprendizajes/<project>-<topic>.html` (`kopi-chess-solid.html`). Their hero reads "<Project>, un caso de
-estudio de" followed by `nav.cs-temas`, one pill link per topic with `aria-current="page"` on the current
-one (the topic is also in the `<h1>` as `.sr-only`, for search engines and screen readers). **When adding a
-topic, add its pill to every page of that project**, keep "Kopi Chess" as the `aria-current` entry of the
-"Aprendizajes de" menu on all of them, add it to "Otros temas de este caso de estudio" in each page's
-Profundiza, and list it in `APRENDIZAJES` and `sitemap.xml`. The pills wrap onto several lines; if a project
-passes about ten topics, group them (Arquitectura, Diseño, Pruebas, Java…) instead of one long row.
+`aprendizajes/<project>-<topic>.html` (`kopi-chess-solid.html`). The hero's `<h1>` reads "<Project>, un caso
+de estudio de <topic>" and is followed by `nav.cs-temas`: one card per topic (own stroke SVG icon, name, one
+line, number of chapters), the current one with `aria-current="page"`, a gradient border and an "Estás aquí"
+badge. The row scrolls sideways when the cards don't fit, with ‹ › buttons that `assets/aprendizajes.js` only
+shows when there is more to see. **When adding a topic, add its card to every page of that project** (same
+order, same text), keep "Kopi Chess" as the `aria-current` entry of the "Aprendizajes de" menu on all of them,
+add it to "Otros temas de este caso de estudio" in each page's Profundiza, and list it in `APRENDIZAJES` and
+`sitemap.xml`. With many topics (Java, Spring Boot…), keep one row and let it scroll; group them by category
+only if the row stops being usable.
 
 ## Certificaciones
 

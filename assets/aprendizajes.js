@@ -6,6 +6,7 @@
  *    texto se lee con textContent y se vuelve a escribir escapado.
  * 2. Marca en el índice (.cs-toc) la sección que se está leyendo.
  * 3. En móvil, cierra el índice desplegable al elegir una sección.
+ * 4. Fichas de temas (.cs-temas): si no caben, flechas para deslizarlas, y la actual a la vista.
  */
 (function () {
   const PALABRAS = {
@@ -46,6 +47,26 @@
   }
 
   document.querySelectorAll('pre code[data-lang]').forEach(colorear);
+
+  const temas = document.querySelector('.cs-temas');
+  if (temas) {
+    const lista = temas.querySelector('.cs-temas-lista');
+    const anterior = temas.querySelector('.cs-temas-flecha.anterior');
+    const siguiente = temas.querySelector('.cs-temas-flecha.siguiente');
+    const flechas = () => {
+      anterior.hidden = lista.scrollLeft <= 2;
+      siguiente.hidden = lista.scrollLeft + lista.clientWidth >= lista.scrollWidth - 2;
+    };
+    const mover = (dir) => lista.scrollBy({ left: dir * lista.clientWidth * 0.8, behavior: 'smooth' });
+    anterior.addEventListener('click', () => mover(-1));
+    siguiente.addEventListener('click', () => mover(1));
+    lista.addEventListener('scroll', flechas, { passive: true });
+    window.addEventListener('resize', flechas);
+    // La ficha actual, a la vista sin mover la página.
+    const actual = lista.querySelector('[aria-current="page"]')?.closest('li');
+    if (actual && actual.offsetLeft + actual.offsetWidth > lista.clientWidth) lista.scrollLeft = actual.offsetLeft - 8;
+    flechas();
+  }
 
   const toc = document.querySelector('.cs-toc');
   if (!toc) return;

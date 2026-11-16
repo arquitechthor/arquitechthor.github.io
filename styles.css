@@ -453,14 +453,30 @@ footer .container { display: flex; align-items: center; justify-content: space-b
 .cs-stats .cert-code strong { font-size: 20px; }
 @media (max-width: 760px) { .cs-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .cs-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-/* Temas de un caso de estudio: el título termina en "un caso de estudio de" y estos botones lo completan.
-   Cada tema es su propia página (aprendizajes/<proyecto>-<tema>.html); los botones se reparten en varias
-   líneas si no caben, y el del tema actual va resaltado (aria-current="page"). */
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-.cs-temas { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 24px; }
-.cs-temas a { padding: 9px 18px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-weight: 600; font-size: 15px; }
-.cs-temas a:hover { border-color: var(--cyan); text-decoration: none; }
-.cs-temas a[aria-current="page"] { background: var(--gradient-brand); border-color: transparent; color: #04060c; }
+/* Temas de un caso de estudio: bajo el título, una ficha por tema (cada tema es su propia página,
+   aprendizajes/<proyecto>-<tema>.html). La del tema actual lleva borde degradado y «Estás aquí». Si no
+   caben, la fila se desliza en horizontal y aparecen las flechas (assets/aprendizajes.js). */
+.cs-temas { position: relative; margin: 8px 0 28px; max-width: 980px; }
+.cs-temas-lista { list-style: none; margin: 0; padding: 6px 2px 12px; display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+.cs-temas-lista li { flex: 0 0 236px; scroll-snap-align: start; }
+.cs-tema { display: flex; flex-direction: column; gap: 6px; height: 100%; padding: 18px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); transition: border-color .2s, transform .2s; }
+.cs-tema:hover { border-color: var(--cyan); transform: translateY(-2px); text-decoration: none; }
+.cs-tema-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.cs-tema-icono { width: 34px; height: 34px; fill: none; stroke: var(--cyan); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.cs-tema-nombre { font-weight: 800; font-size: 17px; line-height: 1.2; }
+.cs-tema-frase { font-size: 13.5px; line-height: 1.45; color: var(--text-muted); }
+.cs-tema-meta { margin-top: auto; padding-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-faint); }
+.cs-tema[aria-current="page"] { border: 2px solid transparent; background: linear-gradient(var(--surface-2), var(--surface-2)) padding-box, var(--gradient-brand) border-box; box-shadow: 0 14px 34px -16px rgba(168, 85, 247, 0.65); }
+.cs-tema[aria-current="page"]:hover { transform: none; }
+.cs-tema[aria-current="page"] .cs-tema-icono { stroke: var(--violet); }
+.cs-tema-aqui { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; background: var(--gradient-brand); color: #04060c; white-space: nowrap; }
+.cs-temas-flecha { position: absolute; top: calc(50% - 24px); z-index: 1; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; box-shadow: 0 6px 18px -6px rgba(0, 0, 0, .6); }
+.cs-temas-flecha:hover { border-color: var(--cyan); }
+.cs-temas-flecha.anterior { left: -14px; }
+.cs-temas-flecha.siguiente { right: -14px; }
+.cs-temas-flecha[hidden] { display: none; }
+@media (max-width: 760px) { .cs-temas-lista li { flex-basis: 210px; } .cs-temas-flecha.anterior { left: -6px; } .cs-temas-flecha.siguiente { right: -6px; } }
+@media (prefers-reduced-motion: reduce) { .cs-tema, .cs-tema:hover { transition: none; transform: none; } }
 
 .cs-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; padding: 48px 24px 96px; }
 .cs-toc { position: sticky; top: 84px; align-self: start; max-height: calc(100vh - 110px); overflow-y: auto; font-size: 13.5px; }
