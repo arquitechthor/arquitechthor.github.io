@@ -15,7 +15,7 @@ function urlEntry(loc, lastmod) {
 }
 
 // Casos de estudio estáticos de aprendizajes/ (añadir aquí cada página nueva).
-const APRENDIZAJES = ['kopi-chess.html', 'kopi-tools.html', 'prompt-quest.html'];
+const APRENDIZAJES = ['kopi-chess.html', 'kopi-chess-solid.html', 'kopi-tools.html', 'prompt-quest.html'];
 
 const today = new Date().toISOString().slice(0, 10);
 const res = await fetch(`${API_BASE}/public/knowledge/topics`);

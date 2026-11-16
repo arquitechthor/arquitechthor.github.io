@@ -76,6 +76,16 @@ domains). The Apuntes AWS guides have matching "Así lo uso en Prompt Quest / Ko
 (`#prompt-quest`, `#kopi-chess`) and Tech Spider fichas a `#caso-real` section that link back here: keep
 the anchors in sync when renaming chapters. New pages go in `APRENDIZAJES` in `scripts/generate-sitemap.mjs`.
 
+**One page per topic.** A project can be a case study of several topics. Each topic is its own page:
+`aprendizajes/<project>.html` is the first one (Kopi Chess: hexagonal architecture) and the rest are
+`aprendizajes/<project>-<topic>.html` (`kopi-chess-solid.html`). Their hero reads "<Project>, un caso de
+estudio de" followed by `nav.cs-temas`, one pill link per topic with `aria-current="page"` on the current
+one (the topic is also in the `<h1>` as `.sr-only`, for search engines and screen readers). **When adding a
+topic, add its pill to every page of that project**, keep "Kopi Chess" as the `aria-current` entry of the
+"Aprendizajes de" menu on all of them, add it to "Otros temas de este caso de estudio" in each page's
+Profundiza, and list it in `APRENDIZAJES` and `sitemap.xml`. The pills wrap onto several lines; if a project
+passes about ten topics, group them (Arquitectura, Diseño, Pruebas, Java…) instead of one long row.
+
 ## Certificaciones
 
 Hardcoded from the public Credly profile

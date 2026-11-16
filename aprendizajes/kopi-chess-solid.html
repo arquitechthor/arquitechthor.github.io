@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kopi Chess, un caso de estudio de SOLID — Héctor Guzmán (arquitechthor)</title>
+<meta name="description" content="Los cinco principios SOLID explicados con el código real de Kopi Chess: Stockfish en cuatro clases, decoradores para las métricas, un contrato con bloqueo optimista, una interfaz por caso de uso y ArchUnit vigilando las dependencias.">
+<link rel="canonical" href="https://arquitechthor.github.io/aprendizajes/kopi-chess-solid.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="arquitechthor">
+<meta property="og:title" content="Kopi Chess, un caso de estudio de SOLID">
+<meta property="og:description" content="Responsabilidad única, abierto/cerrado, Liskov, segregación de interfaces e inversión de dependencias en el código real de una aplicación de ajedrez de código abierto.">
+<meta property="og:url" content="https://arquitechthor.github.io/aprendizajes/kopi-chess-solid.html">
+<meta property="og:image" content="https://arquitechthor.github.io/assets/kopi-chess-review.jpg">
+<meta property="og:locale" content="es_ES">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../assets/favicon-192.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="../#top">
+      <img class="nav-avatar" src="../assets/arquitechthor.jpg" alt="" width="32" height="32">
+      Héctor Guzmán
+    </a>
+    <div class="nav-links">
+      <a href="../#top">Inicio</a>
+      <a href="../#certificaciones">Certificaciones</a>
+      <a href="../#conocimiento">Conocimiento</a>
+      <div class="nav-group">
+        <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navProyectos">Mis proyectos <span aria-hidden="true">▾</span></button>
+        <div class="nav-submenu" id="navProyectos">
+          <a href="../#proyectos">Todos</a>
+          <a href="../#apuntes-aws">Apuntes AWS</a>
+          <a href="../#tech-spider">Tech Spider</a>
+          <a href="../#kopi">Kopi Tools</a>
+          <a href="../#kopi-chess">Kopi Chess</a>
+          <a href="../#prompt-quest">Prompt Quest</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navAprendizajes">Aprendizajes de <span aria-hidden="true">▾</span></button>
+        <div class="nav-submenu" id="navAprendizajes">
+          <a href="kopi-chess.html" aria-current="page">Kopi Chess</a>
+          <a href="kopi-tools.html">Kopi Tools</a>
+          <a href="prompt-quest.html">Prompt Quest</a>
+        </div>
+      </div>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">☰</button>
+  </div>
+</nav>
+
+<main>
+<header class="cs-hero">
+  <div class="container">
+    <span class="eyebrow">Aprendizajes de · Kopi Chess</span>
+    <h1><span class="gradient-text">Kopi Chess</span>, un caso de estudio de<span class="sr-only"> SOLID</span></h1>
+    <nav class="cs-temas" aria-label="Temas del caso de estudio">
+      <a href="kopi-chess.html">Arquitectura hexagonal</a>
+      <a href="kopi-chess-solid.html" aria-current="page">SOLID</a>
+    </nav>
+    <p class="cs-lead">
+      Los cinco principios SOLID se suelen explicar con figuras geométricas y animales. Esta página los explica con el
+      código real de una aplicación de ajedrez de código abierto: dónde aparece cada principio en Kopi Chess, qué
+      problema resuelve allí y, en un caso, por qué se decidió <strong>no</strong> aplicarlo.
+    </p>
+    <div class="cs-stats" aria-label="SOLID en Kopi Chess en cifras">
+      <div class="cert-code"><strong>18</strong><span>casos de uso, cada uno con su interfaz</span></div>
+      <div class="cert-code"><strong>19</strong><span>puertos: interfaces que define la aplicación</span></div>
+      <div class="cert-code"><strong>3</strong><span>decoradores que miden y registran</span></div>
+      <div class="cert-code"><strong>5</strong><span>reglas de ArchUnit que vigilan las dependencias</span></div>
+    </div>
+    <div class="cs-actions">
+      <a class="btn btn-primary" href="https://github.com/arquitechthor/kopi-chess" target="_blank" rel="noopener">Ver el código en GitHub →</a>
+      <a class="btn btn-secondary" href="https://arquitechthor.github.io/arquitechthor-spider/temas/solid.html">Ficha de SOLID en Tech Spider</a>
+    </div>
+  </div>
+</header>
+
+<div class="container cs-layout">
+  <details class="cs-toc" open>
+    <summary>Índice de la página</summary>
+    <p>En esta página</p>
+    <ol>
+      <li><a href="#que-es">1. SOLID en un minuto</a></li>
+      <li><a href="#srp">2. S: Stockfish en cuatro clases</a></li>
+      <li><a href="#ocp">3. O: decoradores y un enrutador de bots</a></li>
+      <li><a href="#ocp-no">4. O, al revés: cuándo cerrarse a propósito</a></li>
+      <li><a href="#lsp">5. L: dos repositorios, un contrato</a></li>
+      <li><a href="#isp">6. I: interfaces pensadas para quien las usa</a></li>
+      <li><a href="#dip">7. D: la aplicación manda</a></li>
+      <li><a href="#juntos">8. Cómo se refuerzan</a></li>
+      <li><a href="#lecciones">9. Lecciones que deja</a></li>
+      <li><a href="#practica">10. Para practicar</a></li>
+      <li><a href="#profundiza">11. Profundiza</a></li>
+    </ol>
+  </details>
+
+  <article class="cs-doc">
+
+    <section id="que-es">
+      <h2><span class="num">01</span>SOLID en un minuto</h2>
+      <p>SOLID son cinco principios de diseño que reunió Robert C. Martin para que el código se pueda cambiar sin
+        miedo. Cada letra es uno:</p>
+      <ul>
+        <li><strong>S, responsabilidad única:</strong> cada módulo tiene una sola razón para cambiar.</li>
+        <li><strong>O, abierto/cerrado:</strong> se puede ampliar el comportamiento sin modificar lo que ya funciona.</li>
+        <li><strong>L, sustitución de Liskov:</strong> cualquier implementación de un contrato se puede usar en lugar de
+          otra sin sorpresas.</li>
+        <li><strong>I, segregación de interfaces:</strong> nadie depende de métodos que no usa.</li>
+        <li><strong>D, inversión de dependencias:</strong> el negocio no depende de los detalles; los detalles dependen
+          de interfaces que define el negocio.</li>
+      </ul>
+      <p>Kopi Chess es un buen sitio para verlos porque su <em>backend</em> sigue la
+        <a href="kopi-chess.html">arquitectura hexagonal</a>, que es SOLID aplicado a todo un sistema: un dominio con las
+        reglas del ajedrez, una capa de aplicación con los casos de uso y los <strong>puertos</strong> (las interfaces que
+        necesita), y un módulo por cada <strong>adaptador</strong> (web, PostgreSQL, Stockfish, el libro de aperturas…). La
+        explicación de cada principio desde cero, con ejemplos genéricos y preguntas para repasar, está en la
+        <a href="https://arquitechthor.github.io/arquitechthor-spider/temas/solid.html">ficha de SOLID de Tech Spider</a>.</p>
+    </section>
+
+    <section id="srp">
+      <h2><span class="num">02</span>S: Stockfish en cuatro clases</h2>
+      <p>La responsabilidad única no significa «hacer una sola cosa»: Martin la aclaró como <em>una sola razón para
+        cambiar</em>. Su versión práctica es juntar lo que cambia por los mismos motivos y separar lo que cambia por motivos
+        distintos.</p>
+      <p>Hablar con Stockfish (el motor que analiza las partidas y juega los bots fuertes) podría ser una sola clase de
+        varios cientos de líneas. Pero ahí dentro hay cuatro cosas que cambian por motivos distintos: cómo se lanza un
+        proceso del sistema operativo, cómo se lee y escribe texto línea a línea con tiempo límite, qué dice el protocolo
+        UCI (el idioma de los motores de ajedrez) y cuántos motores se reparten entre las peticiones. Kopi Chess le da una
+        clase a cada una:</p>
+      <div class="tarjetas">
+        <div><h4>UciProcess</h4><p>Lanza el proceso y lee su salida con un hilo virtual, para que una lectura bloqueada no
+          retenga un hilo de verdad.</p></div>
+        <div><h4>UciConnection</h4><p>La conversación por líneas: enviar un comando, recibir una línea con un tiempo
+          máximo, saber si el motor sigue vivo.</p></div>
+        <div><h4>UciEngine</h4><p>El protocolo: qué se envía (<code>uci</code>, <code>position</code>, <code>go</code>) y
+          qué respuesta se espera.</p></div>
+        <div><h4>EnginePool</h4><p>Un número fijo de motores, cada uno prestado a una petición a la vez y arrancado solo
+          cuando hace falta.</p></div>
+      </div>
+      <p>La frontera más importante es <code>UciConnection</code>, una interfaz de cuatro métodos:</p>
+      <figure class="code">
+        <figcaption><span>adapter/stockfish/UciConnection.java</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-adapter-stockfish/src/main/java/com/arquitechthor/kopi/adapter/stockfish/UciConnection.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// A line-based conversation with a UCI engine: commands go in, lines come
+/// out. [UciProcess] talks to a real process; tests use a scripted one, so
+/// the protocol in [UciEngine] is tested without Stockfish.
+interface UciConnection extends AutoCloseable {
+
+    void send(String command);
+
+    String receive(Duration timeout);
+
+    boolean isAlive();
+
+    @Override
+    void close();
+}</code></pre>
+      </figure>
+      <p>El comentario dice cuál es la recompensa: como el protocolo (<code>UciEngine</code>) no sabe nada de procesos,
+        sus pruebas usan una <code>ScriptedConnection</code> que responde lo que la prueba le diga. El protocolo se prueba
+        entero, timeouts incluidos, <strong>sin instalar Stockfish</strong>.</p>
+      <p>El mismo criterio aparece en otros sitios:</p>
+      <ul>
+        <li><strong>Análisis terminado frente a análisis en curso.</strong> <code>AnalysisRepository</code> solo guarda los
+          resultados; su comentario dice que si un análisis espera, corre o ha fallado «es asunto de»
+          <code>AnalysisJobQueue</code>. Una cosa cambia cuando cambia el informe; la otra, cuando cambia cómo se reparten los
+          trabajos.</li>
+        <li><strong>Un caso de uso, una clase.</strong> <code>PlayMove</code>, <code>Resign</code>, <code>AgreeDraw</code>,
+          <code>ImportPgn</code>… Cambiar cómo se abandona una partida no puede romper cómo se juega una jugada.</li>
+      </ul>
+      <div class="callout leccion">
+        <span class="callout-titulo">Lección</span>
+        <p>La pregunta útil no es «¿cuántas cosas hace esta clase?» sino «¿por cuántos motivos distintos la tendré que
+          tocar?». Y la mejor prueba de que la separación es buena es que cada pieza se pueda probar sola.</p>
+      </div>
+    </section>
+
+    <section id="ocp">
+      <h2><span class="num">03</span>O: decoradores y un enrutador de bots</h2>
+      <p>El principio abierto/cerrado pide poder añadir comportamiento sin editar el código que ya funciona. En Kopi
+        Chess se ve muy claro con las <strong>métricas</strong>: hay que medir cuánto tarda cada bot en mover, pero ni los
+        bots ni los casos de uso deben saber que existe Micrometer (la librería de métricas). La solución es un
+        <strong>decorador</strong>: una clase que cumple la misma interfaz que el bot, lo envuelve y añade la medición.</p>
+      <figure class="code">
+        <figcaption><span>bootstrap/TimedBotPlayer.java</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-bootstrap/src/main/java/com/arquitechthor/kopi/bootstrap/TimedBotPlayer.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// A decorator, so the use cases and the bots stay unaware of Micrometer
+/// (the application ring may not even see it: `HexagonalArchitectureTest`).
+final class TimedBotPlayer implements BotPlayer {
+
+    private final BotPlayer bot;
+    private final MeterRegistry registry;
+
+    @Override
+    public Move chooseMove(Position position, BotProfile profile) {
+        var sample = Timer.start(registry);
+        var outcome = "error";
+        try {
+            var move = bot.chooseMove(position, profile);
+            outcome = "ok";
+            return move;
+        } finally {
+            sample.stop(Timer.builder(METRIC)
+                    .tag("profile", profile.name())
+                    .tag("outcome", outcome)
+                    .register(registry));
+        }
+    }
+}</code></pre>
+      </figure>
+      <p>Hay dos decoradores más del mismo estilo: <code>TimedAnalysisRepository</code> mide cuánto tarda el análisis de
+        una partida entera al guardarlo, y <code>LoggedAnalysisJobQueue</code> registra la vida de cada trabajo de análisis
+        (reclamado, terminado, reintentado, fallido). Los tres viven en el módulo de arranque, que es el único que conoce a
+        la vez los puertos y las librerías de observabilidad.</p>
+      <p>El otro ejemplo es cómo se reparten los bots. Kopi Chess tiene cinco: Peón y Caballo son bots propios, y Alfil,
+        Torre y Dama juegan con Stockfish. Los casos de uso reciben <strong>un solo</strong> <code>BotPlayer</code>, y es la
+        configuración la que decide quién juega cada perfil:</p>
+      <figure class="code">
+        <figcaption><span>bootstrap/UseCaseConfiguration.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-bootstrap/src/main/java/com/arquitechthor/kopi/bootstrap/UseCaseConfiguration.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// One port, two adapters (ADR-006): Kopi's own bots for `PAWN` and
+/// `KNIGHT`, Stockfish for the rest, every move timed (design §14).
+@Bean
+@Primary
+BotPlayer botPlayer(StockfishBots stockfish, MeterRegistry registry) {
+    var own = new KopiBots();
+    BotPlayer bots = (position, profile) -&gt; switch (profile) {
+        case PAWN, KNIGHT -&gt; own.chooseMove(position, profile);
+        case BISHOP, ROOK, QUEEN -&gt; stockfish.chooseMove(position, profile);
+    };
+    return new TimedBotPlayer(bots, registry);
+}</code></pre>
+      </figure>
+      <p>Cambiar qué motor juega un perfil, o envolver los bots con algo más (un registro, un reintento), se hace aquí y
+        solo aquí. <code>PlayMove</code> y <code>CreateGame</code> no se enteran.</p>
+    </section>
+
+    <section id="ocp-no">
+      <h2><span class="num">04</span>O, al revés: cuándo cerrarse a propósito</h2>
+      <p>Hay un sitio de Kopi Chess que hace justo lo contrario de lo que pide el principio, y es una buena decisión. Los
+        tipos de jugada (normal, captura, avance doble de peón, al paso, enroque y promoción) son una <strong>interfaz
+        sellada</strong>: una interfaz que enumera exactamente qué tipos la pueden implementar, y ninguno más.</p>
+      <figure class="code">
+        <figcaption><span>domain/chess/MoveKind.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-domain/src/main/java/com/arquitechthor/kopi/domain/chess/MoveKind.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// A **sealed interface**: these six records are the only possible kinds,
+/// and the compiler knows it. A `switch` over a `MoveKind` that forgets one
+/// does not compile, which is exactly what we want when applying moves to a
+/// position, where each kind changes the board differently.
+public sealed interface MoveKind {
+    record Quiet() implements MoveKind {}
+    record Capture() implements MoveKind {}
+    record DoublePawnPush() implements MoveKind {}
+    record EnPassant() implements MoveKind {}
+    record Castling(CastleSide side) implements MoveKind { … }
+    record Promotion(PieceType piece, boolean capture) implements MoveKind { … }
+}</code></pre>
+      </figure>
+      <p>Aplicar una jugada a una posición es un <code>switch</code> sobre esos seis tipos. Según el abierto/cerrado
+        «puro», cada tipo debería saber aplicarse a sí mismo, para poder añadir tipos nuevos sin tocar el
+        <code>switch</code>. Pero las reglas del ajedrez no van a cambiar: no llegará un séptimo tipo de jugada. Y a cambio,
+        si alguien olvida un caso en cualquier <code>switch</code>, el programa <strong>no compila</strong>.</p>
+      <div class="callout ojo">
+        <span class="callout-titulo">Ojo</span>
+        <p>Ningún código está cerrado frente a todos los cambios posibles: hay que elegir frente a cuáles. Kopi Chess se
+          abre donde el cambio es probable (qué bot juega, qué se mide) y se cierra donde no lo es (las reglas del juego),
+          para que el compilador vigile. Un sexto perfil de bot tiene el mismo efecto: el <code>switch</code> del enrutador
+          deja de compilar hasta que alguien decide quién lo juega.</p>
+      </div>
+    </section>
+
+    <section id="lsp">
+      <h2><span class="num">05</span>L: dos repositorios, un contrato</h2>
+      <p>La sustitución de Liskov dice que quien usa una interfaz no debe llevarse sorpresas con ninguna de sus
+        implementaciones. Martin insiste en que no va de herencia sino de <strong>contratos</strong>: lo que se exige al
+        llamar, lo que se promete al terminar y los errores que se anuncian.</p>
+      <p>El mejor ejemplo de Kopi Chess es el repositorio de partidas. Su interfaz promete un <strong>bloqueo
+        optimista</strong>: al guardar, se dice qué versión de la partida se leyó, y solo se guarda si sigue siendo la
+        guardada. Si dos peticiones mueven a la vez, una falla en lugar de pisar a la otra.</p>
+      <figure class="code">
+        <figcaption><span>application/port/GameRepository.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-application/src/main/java/com/arquitechthor/kopi/application/port/GameRepository.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// Saving uses **optimistic locking**: [#update] says which version was
+/// loaded, and only succeeds if that is still the stored one.
+public interface GameRepository {
+
+    /// Stores `game`, which was loaded at `loadedVersion`.
+    ///
+    /// @throws ConcurrentGameUpdateException if the stored game is no longer
+    ///                                       at `loadedVersion`
+    void update(Game game, long loadedVersion);
+}</code></pre>
+      </figure>
+      <p>Hay dos implementaciones, y las dos cumplen la promesa. La de PostgreSQL lo hace con un <code>where</code> que
+        incluye la versión; la de memoria, que usan las pruebas de los casos de uso, lo comprueba a mano:</p>
+      <figure class="code">
+        <figcaption><span>adapter/persistence/JdbcGameRepository.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-adapter-persistence/src/main/java/com/arquitechthor/kopi/adapter/persistence/JdbcGameRepository.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">var updated = jdbc.sql("""
+        update game
+           set status = :status, result = :result, termination = :termination,
+               version = :version, finished_at = :finishedAt
+         where id = :id and version = :loadedVersion""")
+        // … parámetros …
+        .update();
+if (updated == 0) {
+    throw new ConcurrentGameUpdateException(game.id(), loadedVersion);
+}</code></pre>
+      </figure>
+      <figure class="code">
+        <figcaption><span>application/game/InMemoryGameRepository.java (pruebas)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-application/src/test/java/com/arquitechthor/kopi/application/game/InMemoryGameRepository.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">@Override
+public void update(Game game, long loadedVersion) {
+    var stored = games.get(game.id());
+    if (stored == null || stored.version() != loadedVersion) {
+        throw new ConcurrentGameUpdateException(game.id(), loadedVersion);
+    }
+    games.put(game.id(), game);
+}</code></pre>
+      </figure>
+      <p>Esto es lo que hace que las pruebas de <code>PlayMove</code> con la versión en memoria digan algo cierto sobre
+        producción. Una versión en memoria que guardara sin mirar la versión compilaría igual y haría pasar más pruebas, pero
+        rompería la promesa de «si hay conflicto, no se guarda nada», y las pruebas dejarían de valer.</p>
+      <p>Dos matices que ayudan a entender el principio:</p>
+      <ul>
+        <li><strong>Lanzar errores no rompe a Liskov; sorprender, sí.</strong> <code>KopiBots</code> lanza
+          <code>BotUnavailableException</code> si le piden Alfil, Torre o Dama, que no son suyos. Es correcto, porque el
+          contrato de <code>BotPlayer</code> ya anuncia esa excepción («el bot no puede contestar»), y el caso de uso sabe
+          qué hacer con ella.</li>
+        <li><strong>El contrato también puede prometer que nunca falla.</strong> <code>AnalysisEvents</code> (los avisos de
+          progreso del análisis) dice que sus implementaciones «nunca lanzan»: puede no haber nadie escuchando, y eso no
+          debe romper el análisis. Lo cumplen el adaptador de Server-Sent Events y <code>AnalysisEvents.NONE</code>, una
+          implementación que no hace nada, para las pruebas y para funcionar sin web.</li>
+      </ul>
+    </section>
+
+    <section id="isp">
+      <h2><span class="num">06</span>I: interfaces pensadas para quien las usa</h2>
+      <p>La segregación de interfaces pide varias interfaces pequeñas, cada una pensada para quien la usa, en lugar de una
+        grande para todos. Kopi Chess lo aplica en tres niveles.</p>
+      <h3>Dos puertos para «pedirle cosas a Stockfish»</h3>
+      <p>Elegir la jugada de un bot (<code>BotPlayer</code>) y analizar una posición (<code>ChessEngine</code>) parecen lo
+        mismo, y de hecho las dos las sirve el adaptador de Stockfish. Pero son interfaces distintas, y el comentario del
+        código explica por qué:</p>
+      <figure class="code">
+        <figcaption><span>application/port/ChessEngine.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-application/src/main/java/com/arquitechthor/kopi/application/port/ChessEngine.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">/// A chess engine used to *judge* positions, for post-game analysis
+/// (design §8). A different port from [BotPlayer] (design §4.3): analysis
+/// wants full strength and the engine's scores, a bot wants a move played
+/// with some personality.
+public interface ChessEngine {
+    EngineAnalysis analyse(Position position, SearchLimits limits, int multiPv);
+}</code></pre>
+      </figure>
+      <p>Con una sola interfaz «motor», el bot Peón (que juega sin motor) tendría que implementar un análisis que no sabe
+        hacer, y el análisis dependería de los perfiles de bot, que no le importan.</p>
+      <h3>Tres puertos para el análisis</h3>
+      <p>La cola de trabajos (<code>AnalysisJobQueue</code>), los resultados (<code>AnalysisRepository</code>) y los avisos
+        de progreso (<code>AnalysisEvents</code>) son tres interfaces, no un «servicio de análisis» con todo. Cada una la
+        implementa quien sabe hacerlo: la cola y los resultados, el adaptador de PostgreSQL; los avisos, el adaptador REST.</p>
+      <h3>Una interfaz por caso de uso</h3>
+      <p>Los 18 casos de uso tienen cada uno su interfaz, y 14 de ellas tienen un solo método: <code>PlayMoveUseCase</code>,
+        <code>ResignUseCase</code>, <code>ListGamesUseCase</code>… Así cada controlador declara exactamente lo que usa, y su
+        constructor sirve de índice:</p>
+      <figure class="code">
+        <figcaption><span>adapter/web/GameController.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-adapter-web/src/main/java/com/arquitechthor/kopi/adapter/web/GameController.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">GameController(CreateGameUseCase createGame, CreateLocalGameUseCase createLocalGame, AgreeDrawUseCase agreeDraw,
+        GetGameUseCase getGame, PlayMoveUseCase playMove, ResignUseCase resign, DeleteGameUseCase deleteGame,
+        MessageSource messages, OnlineUseCase online, SseOnlineEvents events) {
+    // …
+}</code></pre>
+      </figure>
+      <p>Para probar el controlador basta con dar implementaciones falsas de esas interfaces; no hace falta montar casos de
+        uso de verdad ni una base de datos.</p>
+    </section>
+
+    <section id="dip">
+      <h2><span class="num">07</span>D: la aplicación manda</h2>
+      <p>La inversión de dependencias pide que las reglas de negocio no dependan de los detalles (la base de datos, la web,
+        Stockfish), sino al revés: el negocio define las interfaces que necesita y los detalles las implementan. Es la idea
+        central de la arquitectura hexagonal, y en Kopi Chess tiene tres partes.</p>
+      <ol class="pasos">
+        <li><strong>Los puertos viven en la aplicación.</strong> Las 19 interfaces de <code>application/port/</code> hablan
+          el idioma del negocio (partidas, posiciones, perfiles de bot), nunca de tablas, procesos o peticiones HTTP.</li>
+        <li><strong>Los adaptadores los implementan.</strong> <code>JdbcGameRepository</code>, <code>StockfishAnalysis</code>,
+          <code>StockfishBots</code>, <code>LichessOpeningBook</code>… Cada adaptador depende de la aplicación; la aplicación
+          no conoce a ninguno.</li>
+        <li><strong>Alguien conecta las piezas.</strong> El módulo de arranque (<code>kopi-bootstrap</code>) es el único que
+          ve todo. En <code>UseCaseConfiguration</code> crea cada caso de uso con <code>new</code> y le pasa las
+          implementaciones por el constructor (inyección de dependencias). Los casos de uso no llevan ninguna anotación de
+          Spring.</li>
+      </ol>
+      <p>Y lo más instructivo: la regla no depende de la disciplina de nadie. Una prueba con ArchUnit (una librería que
+        comprueba la estructura del código) falla si el dominio o la aplicación usan un adaptador, Spring, Micrometer o
+        <code>java.sql</code>:</p>
+      <figure class="code">
+        <figcaption><span>architecture/HexagonalArchitectureTest.java (recortado)</span><a href="https://github.com/arquitechthor/kopi-chess/blob/main/backend/kopi-architecture-tests/src/test/java/com/arquitechthor/kopi/architecture/HexagonalArchitectureTest.java" target="_blank" rel="noopener">ver en GitHub</a></figcaption>
+<pre><code data-lang="java">@ArchTest
+static final ArchRule applicationDependsOnlyOnTheDomain = noClasses()
+        .that().resideInAPackage(APPLICATION)
+        .should().dependOnClassesThat().resideInAnyPackage(
+                ADAPTERS, BOOTSTRAP,
+                "org.springframework..", "jakarta..", "io.micrometer..", "java.sql..", "javax.sql..")
+        .because("use cases must not depend on adapters or on Spring (ADR-002)");
+
+@ArchTest
+static final ArchRule adaptersDoNotKnowEachOther = slices()
+        .matching(ROOT + ".adapter.(*)..")
+        .should().notDependOnEachOther()
+        .because("each adapter talks only to the application ring");</code></pre>
+      </figure>
+      <p>Esta regla explica una decisión de la sección 3: <code>TimedBotPlayer</code> no puede vivir en la aplicación,
+        porque la aplicación no puede ni ver Micrometer. Por eso vive en el arranque.</p>
+      <p>La inversión tiene una recompensa directa en las pruebas: como <code>PlayMove</code> solo conoce interfaces, sus
+        pruebas le pasan un <code>InMemoryGameRepository</code> y un <code>ScriptedBot</code> (un bot que juega las jugadas
+        que la prueba le dicta, o falla cuando se le pide), y se ejecutan en milisegundos, sin base de datos ni Stockfish.</p>
+      <div class="callout">
+        <span class="callout-titulo">Inversión no es inyección</span>
+        <p>Spring hace la inyección: entrega a cada objeto sus piezas. La inversión es otra cosa: decidir que el caso de
+          uso pide un <code>GameRepository</code> (una interfaz suya) y no un <code>JdbcGameRepository</code>. Con
+          inyección pero sin inversión, el caso de uso recibiría la clase de PostgreSQL y seguiría dependiendo de ella.</p>
+      </div>
+    </section>
+
+    <section id="juntos">
+      <h2><span class="num">08</span>Cómo se refuerzan</h2>
+      <p>En Kopi Chess los cinco principios no aparecen sueltos: cada uno hace posible el siguiente.</p>
+      <div class="tarjetas">
+        <div><h4>S → I</h4><p>Separar responsabilidades (bot frente a análisis) es lo que hace que salgan interfaces
+          pequeñas (<code>BotPlayer</code> y <code>ChessEngine</code>).</p></div>
+        <div><h4>I → L</h4><p>Una interfaz de un método es fácil de cumplir del todo: <code>ScriptedBot</code> y
+          <code>TimedBotPlayer</code> sustituyen al bot real sin sorpresas.</p></div>
+        <div><h4>L → O</h4><p>Como cualquier <code>BotPlayer</code> vale, se puede envolver uno con un decorador o enrutar
+          entre dos sin tocar los casos de uso.</p></div>
+        <div><h4>D → todo</h4><p>Como las interfaces son de la aplicación, los adaptadores se cambian, se decoran o se
+          simulan en las pruebas sin que el núcleo lo note.</p></div>
+      </div>
+    </section>
+
+    <section id="lecciones">
+      <h2><span class="num">09</span>Lecciones que deja</h2>
+      <ol class="lecciones">
+        <li><h4>Una responsabilidad es un motivo para cambiar</h4><p>Stockfish en cuatro clases no es trocear por trocear: son cuatro motivos de cambio, y cada pieza se prueba sola.</p></li>
+        <li><h4>Lo transversal va en decoradores</h4><p>Métricas y registros envuelven puertos; ni los casos de uso ni los adaptadores se enteran.</p></li>
+        <li><h4>Ábrete donde el cambio es probable, ciérrate donde no</h4><p>Bots y métricas, abiertos; tipos de jugada, sellados y vigilados por el compilador.</p></li>
+        <li><h4>Las pruebas valen lo que vale el contrato</h4><p>El repositorio en memoria sirve porque cumple el bloqueo optimista igual que PostgreSQL.</p></li>
+        <li><h4>Los puertos se diseñan desde la necesidad</h4><p>Dos puertos para el mismo motor, porque el bot y el análisis necesitan cosas distintas.</p></li>
+        <li><h4>Haz que la arquitectura se compruebe sola</h4><p>Módulos Maven y ArchUnit convierten la inversión de dependencias en una prueba roja, no en una discusión.</p></li>
+      </ol>
+    </section>
+
+    <section id="practica">
+      <h2><span class="num">10</span>Para practicar</h2>
+      <p>Con el repositorio clonado, de menos a más:</p>
+      <ol class="pasos">
+        <li><strong>Encuentra las cuatro razones para cambiar.</strong> Abre <code>UciProcess</code>,
+          <code>UciConnection</code>, <code>UciEngine</code> y <code>EnginePool</code> e imagina un cambio que afecte solo a
+          cada una (otra versión del protocolo, más motores, otro sistema operativo).</li>
+        <li><strong>Escribe un decorador.</strong> Un <code>LoggingBotPlayer</code> que registre cada jugada elegida,
+          conectado en <code>UseCaseConfiguration</code> sin tocar <code>PlayMove</code>.</li>
+        <li><strong>Rompe el contrato a propósito.</strong> Quita la comprobación de versión de
+          <code>InMemoryGameRepository</code>, ejecuta las pruebas de la aplicación y mira cuáles dejan de detectar el
+          conflicto.</li>
+        <li><strong>Añade un séptimo tipo de jugada inventado.</strong> Un <code>record</code> más en
+          <code>MoveKind</code>: cuenta cuántos <code>switch</code> dejan de compilar. Ese es el precio, y la ventaja, de
+          cerrarse.</li>
+        <li><strong>Rompe la inversión.</strong> Usa una clase de Spring en un caso de uso y ejecuta
+          <code>./mvnw verify</code>: lee qué regla de ArchUnit falla y por qué.</li>
+      </ol>
+    </section>
+
+    <section id="profundiza">
+      <h2><span class="num">11</span>Profundiza</h2>
+      <p>Los conceptos de esta página tienen su ficha en Tech Spider (el mapa de tecnologías). Las fichas que aún no están
+        escritas muestran una página de «próximamente».</p>
+      <div class="profundiza">
+        <div>
+          <h3>En Tech Spider</h3>
+          <div class="enlaces">
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/temas/solid.html">SOLID</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/temas/hexagonal-architecture.html">Arquitectura hexagonal</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/temas/clean-architecture.html">Clean Architecture</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=dependency-injection">Inyección de dependencias</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=structural-patterns">Patrones estructurales (decorador)</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=behavioral-patterns">Patrones de comportamiento (estrategia)</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=high-cohesion-low-coupling">Alta cohesión y bajo acoplamiento</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=oop">Programación orientada a objetos</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=test-doubles">Dobles de prueba</a>
+            <a href="https://arquitechthor.github.io/arquitechthor-spider/tema.html?id=modern-java">Java moderno</a>
+          </div>
+        </div>
+        <div>
+          <h3>Otros temas de este caso de estudio</h3>
+          <div class="enlaces">
+            <a href="kopi-chess.html">Kopi Chess: arquitectura hexagonal</a>
+          </div>
+          <h3 style="margin-top:24px">Otros aprendizajes</h3>
+          <div class="enlaces">
+            <a href="prompt-quest.html">Prompt Quest: hexagonal en TypeScript con IA</a>
+            <a href="kopi-tools.html">Kopi Tools: serverless en AWS</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </article>
+</div>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-brand">© 2026 Héctor Guzmán · arquitechthor</div>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/guzman6001/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/arquitechthor" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <nav class="footer-sitios" aria-label="Webs de Héctor Guzmán">
+      <a href="https://kopitools.link">Kopi Tools</a>
+      <a href="https://arquitechthor.github.io/aws-cert-study/">Apuntes AWS</a>
+      <a href="https://arquitechthor.github.io/arquitechthor-spider/">Tech Spider</a>
+      <a href="../#kopi-chess">Kopi Chess</a>
+      <a href="../#prompt-quest">Prompt Quest</a>
+      <a href="https://arquitechthor.github.io/" aria-current="true">Arquitechthor</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/aprendizajes.js" defer></script>
+
+</body>
+</html>
