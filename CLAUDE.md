@@ -15,8 +15,8 @@ Because it's the user site, the account's project sites are served under it:
 named like those repos (`aws-cert-study`, `arquitechthor-spider`, `dev-tools`, `arquitechthor`) here — they would shadow those project sites.
 
 ```
-index.html          # home: #top (Sobre mí hero) → #certificaciones → #conocimiento → #proyectos (intro) → #apuntes-aws → #tech-spider → #dev-tools → #kopi → #kopi-chess → #prompt-quest
-                    # menu: Inicio · Certificaciones · Conocimiento · "Mis proyectos" dropdown (Todos, Apuntes AWS, Tech Spider, Dev Tools, Kopi Tools, Kopi Chess, Prompt Quest)
+index.html          # home: #top (Sobre mí hero) → #certificaciones → #conocimiento → #proyectos (intro) → #apuntes-aws → #tech-spider → #kopi → #kopi-chess → #prompt-quest → #dev-tools
+                    # menu: Inicio · Certificaciones · Conocimiento · "Mis proyectos" dropdown (Todos, Apuntes AWS, Tech Spider, Kopi Tools, Kopi Chess, Prompt Quest, Dev Tools)
                     #       · "Aprendizajes de" dropdown (Kopi Chess, Kopi Tools, Prompt Quest); the Kopi Tools, Kopi Chess and Prompt Quest sections have an "Aprendizajes" button
 aprendizajes/       # case studies, one static page per project (kopi-chess, kopi-tools, prompt-quest) — see "Aprendizajes"
 conocimiento.html   # Tema detail page (?tema=<id>), rendered client-side by assets/conocimiento.js — see "Conocimiento"
