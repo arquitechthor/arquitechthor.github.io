@@ -10,13 +10,13 @@ published from `main`, root folder — every push redeploys). Plain HTML/CSS, no
 dependencies. `.nojekyll` disables Jekyll processing.
 
 Because it's the user site, the account's project sites are served under it:
-`aws-cert-study` at `/aws-cert-study/` and the profile repo `arquitechthor` at `/arquitechthor/`
+`aws-cert-study` at `/aws-cert-study/`, `arquitechthor-spider` and `dev-tools` at their own paths, and the profile repo `arquitechthor` at `/arquitechthor/`
 (which only holds a redirect back here — the site briefly lived there). Don't add folders
-named `aws-cert-study` or `arquitechthor` here — they would shadow those project sites.
+named like those repos (`aws-cert-study`, `arquitechthor-spider`, `dev-tools`, `arquitechthor`) here — they would shadow those project sites.
 
 ```
-index.html          # home: #top (Sobre mí hero) → #certificaciones → #conocimiento → #proyectos (intro) → #apuntes-aws → #kopi → #kopi-chess → #prompt-quest
-                    # menu: Inicio · Certificaciones · Conocimiento · "Mis proyectos" dropdown (Todos, Apuntes AWS, Tech Spider, Kopi Tools, Kopi Chess, Prompt Quest)
+index.html          # home: #top (Sobre mí hero) → #certificaciones → #conocimiento → #proyectos (intro) → #apuntes-aws → #tech-spider → #dev-tools → #kopi → #kopi-chess → #prompt-quest
+                    # menu: Inicio · Certificaciones · Conocimiento · "Mis proyectos" dropdown (Todos, Apuntes AWS, Tech Spider, Dev Tools, Kopi Tools, Kopi Chess, Prompt Quest)
                     #       · "Aprendizajes de" dropdown (Kopi Chess, Kopi Tools, Prompt Quest); the Kopi Tools, Kopi Chess and Prompt Quest sections have an "Aprendizajes" button
 aprendizajes/       # case studies, one static page per project (kopi-chess, kopi-tools, prompt-quest) — see "Aprendizajes"
 conocimiento.html   # Tema detail page (?tema=<id>), rendered client-side by assets/conocimiento.js — see "Conocimiento"

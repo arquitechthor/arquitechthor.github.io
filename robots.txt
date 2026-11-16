@@ -3,3 +3,4 @@ Allow: /
 
 Sitemap: https://arquitechthor.github.io/sitemap.xml
 Sitemap: https://arquitechthor.github.io/aws-cert-study/sitemap.xml
+Sitemap: https://arquitechthor.github.io/dev-tools/sitemap.xml
